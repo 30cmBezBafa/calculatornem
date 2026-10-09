@@ -1,11 +1,17 @@
 (function() {
 'use strict';
+
 const $ = function(id) { return document.getElementById(id); };
 const el = function(tag, cls, html) {
     const e = document.createElement(tag);
     if (cls) e.className = cls;
     if (html !== undefined) e.innerHTML = html;
     return e;
+};
+
+const CAT_ICONS = {
+    to: '🛢️', engine: '⚙️', engine_big: '🏗️', gearbox: '🔄', awd: '🧭',
+    suspension: '🌀', brakes: '🛑', steering: '🛞', electrics: '⚡', exhaust: '💨'
 };
 
 function cloudGet(action) {
@@ -37,18 +43,25 @@ function init() {
             localStorage.setItem('nemesia_theme', theme);
         };
     }
+
     if ($('rateEngine')) $('rateEngine').value = CONFIG.rates.engine;
     if ($('rateStandard')) $('rateStandard').value = CONFIG.rates.standard;
     if ($('saveRatesBtn')) $('saveRatesBtn').onclick = saveRates;
-    if ($('coeffRusty')) $('coeffRusty').value = CONFIG.coefficients.rusty_bolts.percent;
-    if ($('coeffAluminum')) $('coeffAluminum').value = CONFIG.coefficients.aluminum.percent;
-    if ($('coeffLpg')) $('coeffLpg').value = CONFIG.coefficients.lpg.percent;
+
+    if ($('coeffRusty') && CONFIG.coefficients.rusty_bolts) $('coeffRusty').value = CONFIG.coefficients.rusty_bolts.percent;
+    if ($('coeffAluminum') && CONFIG.coefficients.aluminum) $('coeffAluminum').value = CONFIG.coefficients.aluminum.percent;
+    if ($('coeffLpg') && CONFIG.coefficients.lpg) $('coeffLpg').value = CONFIG.coefficients.lpg.percent;
     if ($('saveCoeffsBtn')) $('saveCoeffsBtn').onclick = saveCoeffs;
+    renderCoeffs();
+    if ($('addCoeffBtn')) $('addCoeffBtn').onclick = addCoeff;
+
     renderManagers();
     if ($('addManagerBtn')) $('addManagerBtn').onclick = addManager;
+
     renderVinQueue();
     if (CONFIG.cloudUrl) setInterval(renderVinQueue, 30000);
     if ($('exportVinBtn')) $('exportVinBtn').onclick = exportVinQueue;
+
     initModForm();
 }
 
@@ -60,20 +73,64 @@ function saveRates() {
 }
 
 function saveCoeffs() {
-    CONFIG.coefficients.rusty_bolts.percent = parseInt($('coeffRusty').value) || 15;
-    CONFIG.coefficients.aluminum.percent = parseInt($('coeffAluminum').value) || 20;
-    CONFIG.coefficients.lpg.percent = parseInt($('coeffLpg').value) || 10;
+    if (CONFIG.coefficients.rusty_bolts) CONFIG.coefficients.rusty_bolts.percent = parseInt($('coeffRusty').value) || CONFIG.coefficients.rusty_bolts.percent;
+    if (CONFIG.coefficients.aluminum) CONFIG.coefficients.aluminum.percent = parseInt($('coeffAluminum').value) || CONFIG.coefficients.aluminum.percent;
+    if (CONFIG.coefficients.lpg) CONFIG.coefficients.lpg.percent = parseInt($('coeffLpg').value) || CONFIG.coefficients.lpg.percent;
     downloadConfig();
     showToast('Коэффициенты сохранены');
 }
 
+// --- СПИСОК КОЭФФИЦИЕНТОВ + ДОБАВЛЕНИЕ ---
+function renderCoeffs() {
+    const box = $('coeffList');
+    if (!box) return;
+    box.innerHTML = '';
+    const keys = Object.keys(CONFIG.coefficients);
+    if (keys.length === 0) {
+        box.innerHTML = '<div style="font-size:12px;color:var(--text-muted);padding:4px 0;">Коэффициентов нет</div>';
+        return;
+    }
+    keys.forEach(function(key) {
+        const c = CONFIG.coefficients[key];
+        const row = el('div');
+        row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:5px 0;font-size:13px;border-bottom:1px solid var(--border-light);';
+        row.innerHTML = '<span style="flex:1;font-weight:600;">' + c.label + ' <span style="color:var(--text-muted);font-weight:400;">(+' + c.percent + '%)</span></span>' +
+            '<button class="admin-btn danger" style="padding:3px 10px;font-size:11px;">Удалить</button>';
+        row.querySelector('button').onclick = function() {
+            if (!confirm('Удалить коэффициент «' + c.label + '»?')) return;
+            delete CONFIG.coefficients[key];
+            renderCoeffs();
+            downloadConfig();
+            showToast('Коэффициент удалён');
+        };
+        box.appendChild(row);
+    });
+}
+
+function addCoeff() {
+    const labelEl = $('coeffNewLabel');
+    const percentEl = $('coeffNewPercent');
+    if (!labelEl || !percentEl) return;
+    const label = labelEl.value.trim();
+    const percent = parseInt(percentEl.value);
+    if (!label || !percent) { showToast('Введите название и процент'); return; }
+    const key = 'c' + Date.now();
+    CONFIG.coefficients[key] = { label: label, percent: percent };
+    labelEl.value = '';
+    percentEl.value = '';
+    renderCoeffs();
+    downloadConfig();
+    showToast('Коэффициент добавлен');
+}
+
+// --- MANAGERS ---
 function renderManagers() {
     const tbody = $('managersTable');
     if (!tbody) return;
     tbody.innerHTML = '';
     CONFIG.managers.forEach(function(m, i) {
         const tr = el('tr');
-        tr.innerHTML = '<td>' + m.name + '</td><td style="text-align:right"><button class="admin-btn danger small" data-idx="' + i + '">Удалить</button></td>';
+        tr.innerHTML = '<td>' + m.name + '</td><td style="text-align:right"><button class="admin-btn danger" style="padding:3px 10px;font-size:11px;" data-idx="' + i + '">Удалить</button></td>';
         tr.querySelector('button').onclick = function() {
             if (CONFIG.managers.length <= 1) { showToast('Нельзя удалить последнего менеджера'); return; }
             CONFIG.managers.splice(i, 1);
@@ -94,6 +151,7 @@ function addManager() {
     showToast('Менеджер добавлен');
 }
 
+// --- VIN QUEUE ---
 function renderVinQueue() {
     const container = $('vinQueueList');
     if (!container) return;
@@ -111,7 +169,7 @@ function drawQueue(container, cloudItems, localItems, cloudError) {
     let banner = cloudError ? '<div class="queue-empty">Облако недоступно — показаны локальные заявки</div>' : '';
     let bodyHtml = '';
     localItems.forEach(function(item, i) {
-        bodyHtml += '<div class="queue-item"><div class="queue-header"><span class="queue-type-badge" style="background:#c44;color:#fff">ждёт отправки</span>' +
+        bodyHtml += '<div class="queue-item"><div class="queue-header"><span class="queue-type-badge" style="background:var(--danger);color:#fff">ждёт отправки</span>' +
             '<span class="queue-date">' + new Date(item.date).toLocaleString('ru-RU', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'}) + '</span></div>' +
             (item.description ? '<div class="queue-desc"><strong>Описание:</strong> ' + item.description + '</div>' : '') +
             (item.vin ? '<div class="queue-vin"><strong>VIN:</strong> ' + item.vin + '</div>' : '') +
@@ -175,6 +233,7 @@ function downloadJson(data) {
     URL.revokeObjectURL(a.href);
 }
 
+// --- ADD MODIFICATION ---
 function initModForm() {
     const brandSel = $('modBrand');
     if (!brandSel) return;
@@ -187,7 +246,7 @@ function initModForm() {
         const h = el('div', 'work-category-header');
         h.style.cursor = 'pointer';
         h.style.marginTop = '8px';
-        h.innerHTML = '<span class="arrow" style="font-size:10px;transition:transform 0.2s;display:inline-block;width:12px">▶</span> ' + categories[catKey] + ' <span style="margin-left:auto;font-size:11px;color:var(--text-muted)">' + catWorks.length + '</span>';
+        h.innerHTML = '<span class="arrow" style="font-size:9px;transition:transform 0.15s;display:inline-block;width:12px">▶</span> <span class="cat-icon">' + (CAT_ICONS[catKey] || '') + '</span> ' + categories[catKey] + ' <span style="margin-left:auto;font-size:11px;color:var(--text-muted)">' + catWorks.length + '</span>';
         const body = el('div', 'work-category-body');
         body.style.display = 'none';
         h.onclick = function() {
@@ -200,7 +259,7 @@ function initModForm() {
             const w = entry[1];
             const row = el('div', 'mod-form-row');
             row.innerHTML = '<div class="mod-group" style="flex:3"><label>' + w.name + '</label></div>' +
-                '<div class="mod-group" style="flex:1"><label>Нормо-часы</label><input type="number" class="admin-input" data-wid="' + wid + '" placeholder="' + w.nh + '" step="0.1" style="font-size:12px"></div>' +
+                '<div class="mod-group" style="flex:1"><label>Нормо-часы</label><input type="number" class="admin-input" data-wid="' + wid + '" placeholder="' + w.nh + '" step="0.1"></div>' +
                 '<div class="mod-group" style="flex:1"><label>Ставка</label><select class="rate-select" data-wid="' + wid + '"><option value="standard"' + (w.rateType === 'standard' ? ' selected' : '') + '>Обычная</option><option value="engine"' + (w.rateType === 'engine' ? ' selected' : '') + '>ДВС/КПП</option></select></div>';
             body.appendChild(row);
         });
