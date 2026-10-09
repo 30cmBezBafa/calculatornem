@@ -1,5 +1,10 @@
+// ============================================
+// КОНФИГУРАЦИЯ СИСТЕМЫ
+// ============================================
 const CONFIG = {
-    cloudUrl: 'https://script.google.com/macros/s/AKfycbxplPCM6GQDSTtZTz8LQn0qjPTPe7ElAbQbuB5sIxA0rkADtTgHTRPPwnooICmyj1C7/exec',
+    // ВСТАВЬ СЮДА ссылку Apps Script (заканчивается на /exec).
+    // Без неё журнал и общая история работают локально.
+    cloudUrl: '',
     rates: {
         engine: 3000,
         standard: 2500
@@ -121,7 +126,7 @@ function validateWorks(brandData, brandName) {
         if (!mod.works) return;
         mod.works.forEach(function(workId) {
             if (!worksCatalog[workId]) {
-                errors.push('[' + brandName + '] Модификация #' + i + ': неизвестный workId "' + workId + '"');
+                errors.push('[' + brandName + '] Модификация #' + i + ' (' + (mod.model || '?') + '): неизвестный workId "' + workId + '"');
             }
         });
     });
