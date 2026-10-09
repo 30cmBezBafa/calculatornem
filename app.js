@@ -1,6 +1,3 @@
-// ============================================
-// НЕМЕЦИЯ — ОСНОВНАЯ ЛОГИКА (с облаком и журналом)
-// ============================================
 (function() {
 'use strict';
 
@@ -54,7 +51,6 @@ function cloudGet(action) {
         .catch(function() { return { ok: false }; });
 }
 
-// --- ADD OPTIONS / MODALS ---
 function addAddOption(selectId, labelText) {
     const sel = $(selectId);
     if (!sel) return;
@@ -78,7 +74,6 @@ function closeAddModal() {
     if (overlay) overlay.classList.remove('active');
 }
 
-// --- JOURNAL ---
 function openJournal() {
     const overlay = $('journalOverlay');
     if (!overlay) return;
@@ -123,8 +118,7 @@ function renderJournalList(filter) {
         card.onclick = function() {
             const row = parseInt(card.dataset.row);
             const it = journalItems.find(function(x) { return x.row === row; });
-            if (!it) return;
-            if (!it.data || !it.data.modificationId) {
+            if (!it || !it.data || !it.data.modificationId) {
                 showToast('В этой записи нет данных для восстановления');
                 return;
             }
@@ -135,7 +129,6 @@ function renderJournalList(filter) {
     });
 }
 
-// --- WORK ITEM TEMPLATE ---
 function workItemHTML(workId, work, price, inCalc, customNh) {
     const rateLabel = work.rateType === 'engine' ? 'ДВС' : '';
     const badge = rateLabel ? '<span class="rate-badge ' + work.rateType + '">' + rateLabel + '</span>' : '';
@@ -154,7 +147,6 @@ function workItemHTML(workId, work, price, inCalc, customNh) {
         '</div>';
 }
 
-// --- INIT ---
 function init() {
     const savedTheme = localStorage.getItem('nemesia_theme') || 'light';
     document.documentElement.setAttribute('data-theme', savedTheme);
@@ -181,38 +173,30 @@ function init() {
         };
     }
 
-    if ($('modelSelect')) $('modelSelect').onchange = function() {
-        if ($('modelSelect').value === '__add__') { openAddModal('Модель'); $('modelSelect').value = ''; return; }
-        onModelChange();
-    };
-    if ($('genSelect')) $('genSelect').onchange = function() {
-        if ($('genSelect').value === '__add__') { openAddModal('Поколение'); $('genSelect').value = ''; return; }
-        onGenChange();
-    };
-    if ($('engineSelect')) $('engineSelect').onchange = function() {
-        if ($('engineSelect').value === '__add__') { openAddModal('ДВС'); $('engineSelect').value = ''; return; }
-        onEngineChange();
-    };
-    if ($('gearboxSelect')) $('gearboxSelect').onchange = function() {
-        if ($('gearboxSelect').value === '__add__') { openAddModal('КПП'); $('gearboxSelect').value = ''; return; }
-        onGearboxChange();
-    };
-    if ($('driveSelect')) $('driveSelect').onchange = function() {
-        if ($('driveSelect').value === '__add__') { openAddModal('Привод'); $('driveSelect').value = ''; return; }
-        onDriveChange();
-    };
+    ['modelSelect', 'genSelect', 'engineSelect', 'gearboxSelect', 'driveSelect'].forEach(function(id) {
+        const types = { modelSelect: 'Модель', genSelect: 'Поколение', engineSelect: 'ДВС', gearboxSelect: 'КПП', driveSelect: 'Привод' };
+        const sel = $(id);
+        if (sel) sel.onchange = function() {
+            if (sel.value === '__add__') { openAddModal(types[id]); sel.value = ''; return; }
+            if (id === 'modelSelect') onModelChange();
+            else if (id === 'genSelect') onGenChange();
+            else if (id === 'engineSelect') onEngineChange();
+            else if (id === 'gearboxSelect') onGearboxChange();
+            else if (id === 'driveSelect') onDriveChange();
+        };
+    });
 
-    if ($('globalSearch')) $('globalSearch').addEventListener('input', debounce(onSearchInput, 200));
-    if ($('globalSearch')) $('globalSearch').addEventListener('keydown', onSearchKeydown);
+    if ($('globalSearch')) {
+        $('globalSearch').addEventListener('input', debounce(onSearchInput, 200));
+        $('globalSearch').addEventListener('keydown', onSearchKeydown);
+    }
     if ($('worksSearch')) $('worksSearch').addEventListener('input', debounce(onWorksSearch, 200));
 
     if ($('saveCalcBtn')) $('saveCalcBtn').onclick = saveCalculation;
     if ($('clearAllBtn')) $('clearAllBtn').onclick = clearAll;
     if ($('journalBtn')) $('journalBtn').onclick = openJournal;
     if ($('journalClose')) $('journalClose').onclick = closeJournal;
-    if ($('journalSearch')) $('journalSearch').addEventListener('input', debounce(function() {
-        renderJournalList($('journalSearch').value);
-    }, 200));
+    if ($('journalSearch')) $('journalSearch').addEventListener('input', debounce(function() { renderJournalList($('journalSearch').value); }, 200));
 
     if ($('themeToggle')) {
         $('themeToggle').onchange = function() {
@@ -234,21 +218,17 @@ function init() {
     }
 
     renderHistory();
-
     if (typeof volkswagenDB !== 'undefined') {
         currentBrandData = volkswagenDB;
-        const errors = validateWorks(volkswagenDB, 'Volkswagen');
-        if (errors.length > 0) console.warn('Validation errors:', errors);
+        validateWorks(volkswagenDB, 'Volkswagen');
     }
 }
 
-// --- BRAND CHANGE CHAIN ---
 function onBrandChange() {
     const brandId = $('brandSelect').value;
     if (!brandId) return;
     currentBrand = CONFIG.brands.find(function(b) { return b.id === brandId; });
-    if (brandId === 'volkswagen' && typeof volkswagenDB !== 'undefined') currentBrandData = volkswagenDB;
-    else currentBrandData = null;
+    currentBrandData = (brandId === 'volkswagen' && typeof volkswagenDB !== 'undefined') ? volkswagenDB : null;
     if (!currentBrandData) { openAddModal('Марка'); return; }
     resetSelect('modelSelect'); resetSelect('genSelect'); resetSelect('engineSelect');
     resetSelect('gearboxSelect'); resetSelect('driveSelect');
@@ -261,8 +241,7 @@ function onBrandChange() {
 function onModelChange() {
     const model = $('modelSelect').value;
     if (!model || !currentBrandData) return;
-    resetSelect('genSelect'); resetSelect('engineSelect');
-    resetSelect('gearboxSelect'); resetSelect('driveSelect');
+    resetSelect('genSelect'); resetSelect('engineSelect'); resetSelect('gearboxSelect'); resetSelect('driveSelect');
     expandedCats.clear(); expandedIncludes.clear();
     const mods = currentBrandData.modifications.filter(function(m) { return m.model === model; });
     const gens = [...new Set(mods.map(function(m) { return m.generation; }))].sort();
@@ -278,11 +257,7 @@ function onGenChange() {
     expandedCats.clear(); expandedIncludes.clear();
     const mods = currentBrandData.modifications.filter(function(m) { return m.model === model && m.generation === gen; });
     const engines = mods.map(function(m) {
-        return {
-            value: m.id,
-            label: m.engine.code + ' / ' + m.engine.volume + ' / ' + m.engine.power + ' / ' + m.engine.torque,
-            mod: m
-        };
+        return { value: m.id, label: m.engine.code + ' / ' + m.engine.volume + ' / ' + m.engine.power + ' / ' + m.engine.torque, mod: m };
     });
     fillSelect('engineSelect', engines.map(function(e) { return e.label; }), engines.map(function(e) { return e.value; }));
     addAddOption('engineSelect', 'ДВС');
@@ -295,11 +270,7 @@ function onEngineChange() {
     resetSelect('gearboxSelect'); resetSelect('driveSelect');
     expandedCats.clear(); expandedIncludes.clear();
     const gearboxes = mods.map(function(m) {
-        return {
-            value: m.id,
-            label: m.gearbox.code + ' / ' + m.gearbox.type + ' / ' + m.gearbox.gears + ' ст.',
-            mod: m
-        };
+        return { value: m.id, label: m.gearbox.code + ' / ' + m.gearbox.type + ' / ' + m.gearbox.gears + ' ст.', mod: m };
     });
     fillSelect('gearboxSelect', gearboxes.map(function(g) { return g.label; }), gearboxes.map(function(g) { return g.value; }));
     addAddOption('gearboxSelect', 'КПП');
@@ -331,30 +302,23 @@ function onDriveChange() {
     if ($('worksPanel')) $('worksPanel').style.display = 'block';
 }
 
-// --- GLOBAL SEARCH ---
 function onSearchInput() {
     const q = $('globalSearch').value.trim().toLowerCase();
     const dropdown = $('searchDropdown');
     if (!q) { dropdown.classList.remove('active'); return; }
-    if (!currentBrandData) {
-        if (typeof volkswagenDB !== 'undefined') currentBrandData = volkswagenDB;
-        else { dropdown.classList.remove('active'); return; }
-    }
+    if (!currentBrandData && typeof volkswagenDB !== 'undefined') currentBrandData = volkswagenDB;
+    if (!currentBrandData) { dropdown.classList.remove('active'); return; }
     searchResults = currentBrandData.modifications.filter(function(m) {
-        return m.model.toLowerCase().includes(q) ||
-            m.generation.toLowerCase().includes(q) ||
-            m.engine.code.toLowerCase().includes(q) ||
-            m.gearbox.code.toLowerCase().includes(q) ||
+        return m.model.toLowerCase().includes(q) || m.generation.toLowerCase().includes(q) ||
+            m.engine.code.toLowerCase().includes(q) || m.gearbox.code.toLowerCase().includes(q) ||
             m.engine.volume.toLowerCase().includes(q);
     }).slice(0, 15);
     if (searchResults.length === 0) {
         dropdown.innerHTML = '<div class="item" style="color:var(--text-muted)">Ничего не найдено. <a href="#" onclick="openAddModal(\'Модификация целиком\'); return false;">Запросить добавление</a></div>';
     } else {
         dropdown.innerHTML = searchResults.map(function(m, i) {
-            return '<div class="item" data-index="' + i + '">' +
-                '<div class="item-model">' + m.model + ' — ' + m.generation + '</div>' +
-                '<div class="item-detail">' + m.engine.code + ' · ' + m.engine.volume + ' · ' + m.engine.power + ' · ' + m.gearbox.code + ' · ' + m.drive + '</div>' +
-                '</div>';
+            return '<div class="item" data-index="' + i + '"><div class="item-model">' + m.model + ' — ' + m.generation + '</div>' +
+                '<div class="item-detail">' + m.engine.code + ' · ' + m.engine.volume + ' · ' + m.engine.power + ' · ' + m.gearbox.code + ' · ' + m.drive + '</div></div>';
         }).join('');
         dropdown.querySelectorAll('.item').forEach(function(item) {
             item.onclick = function() { selectFromSearch(searchResults[parseInt(item.dataset.index)]); };
@@ -369,30 +333,18 @@ function onSearchKeydown(e) {
     if (!dropdown.classList.contains('active')) return;
     const items = dropdown.querySelectorAll('.item[data-index]');
     if (items.length === 0) return;
-    if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        searchActiveIndex = Math.min(searchActiveIndex + 1, items.length - 1);
-        items.forEach(function(it, i) { it.classList.toggle('active', i === searchActiveIndex); });
-        items[searchActiveIndex].scrollIntoView({ block: 'nearest' });
-    } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        searchActiveIndex = Math.max(searchActiveIndex - 1, 0);
-        items.forEach(function(it, i) { it.classList.toggle('active', i === searchActiveIndex); });
-        items[searchActiveIndex].scrollIntoView({ block: 'nearest' });
-    } else if (e.key === 'Enter') {
-        e.preventDefault();
-        if (searchActiveIndex >= 0 && searchResults[searchActiveIndex]) selectFromSearch(searchResults[searchActiveIndex]);
-    } else if (e.key === 'Escape') {
-        dropdown.classList.remove('active');
-        $('globalSearch').value = '';
-    }
+    if (e.key === 'ArrowDown') { e.preventDefault(); searchActiveIndex = Math.min(searchActiveIndex + 1, items.length - 1); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); searchActiveIndex = Math.max(searchActiveIndex - 1, 0); }
+    else if (e.key === 'Enter') { e.preventDefault(); if (searchActiveIndex >= 0 && searchResults[searchActiveIndex]) selectFromSearch(searchResults[searchActiveIndex]); return; }
+    else if (e.key === 'Escape') { dropdown.classList.remove('active'); $('globalSearch').value = ''; return; }
+    items.forEach(function(it, i) { it.classList.toggle('active', i === searchActiveIndex); });
+    if (searchActiveIndex >= 0) items[searchActiveIndex].scrollIntoView({ block: 'nearest' });
 }
 
 function selectFromSearch(mod) {
     $('searchDropdown').classList.remove('active');
     $('globalSearch').value = '';
-    $('brandSelect').value = 'volkswagen';
-    onBrandChange();
+    $('brandSelect').value = 'volkswagen'; onBrandChange();
     $('modelSelect').value = mod.model; onModelChange();
     $('genSelect').value = mod.generation; onGenChange();
     $('engineSelect').value = mod.id; onEngineChange();
@@ -407,66 +359,46 @@ document.addEventListener('click', function(e) {
     }
 });
 
-// --- WORKS SEARCH ---
 function onWorksSearch() {
     const q = $('worksSearch').value.trim().toLowerCase();
     const cats = document.querySelectorAll('.work-category');
-    if (!q) {
-        cats.forEach(function(cat) {
-            const catKey = cat.dataset.cat;
-            const header = cat.querySelector('.work-category-header');
-            const body = cat.querySelector('.work-category-body');
+    cats.forEach(function(cat) {
+        const catKey = cat.dataset.cat;
+        const header = cat.querySelector('.work-category-header');
+        const body = cat.querySelector('.work-category-body');
+        if (!q) {
             const expanded = expandedCats.has(catKey);
             header.classList.toggle('expanded', expanded);
             body.classList.toggle('expanded', expanded);
             cat.querySelectorAll('.work-item').forEach(function(w) { w.style.display = ''; });
-        });
-        return;
-    }
-    cats.forEach(function(cat) {
+            return;
+        }
         let visible = 0;
         cat.querySelectorAll('.work-item').forEach(function(w) {
-            const name = w.querySelector('.work-name').textContent.toLowerCase();
-            const match = name.includes(q);
+            const match = w.querySelector('.work-name').textContent.toLowerCase().includes(q);
             w.style.display = match ? '' : 'none';
             if (match) visible++;
         });
-        const header = cat.querySelector('.work-category-header');
-        const body = cat.querySelector('.work-category-body');
-        if (visible > 0) {
-            header.classList.add('expanded'); body.classList.add('expanded');
-            header.querySelector('.count').textContent = visible + ' совпад.';
-        } else {
-            header.classList.remove('expanded'); body.classList.remove('expanded');
-        }
+        if (visible > 0) { header.classList.add('expanded'); body.classList.add('expanded'); header.querySelector('.count').textContent = visible + ' совпад.'; }
+        else { header.classList.remove('expanded'); body.classList.remove('expanded'); }
     });
 }
 
-// --- FLUIDS ---
 function renderFluids(mod) {
     const f = mod.fluids;
-    const rows = [
-        ['Моторное масло', f.engine_oil],
-        ['Масло КПП', f.gearbox_oil],
-        ['Масло раздатки', f.transfer_case],
-        ['Масло переднего редуктора', f.diff_front],
-        ['Масло заднего редуктора', f.diff_rear],
-        ['Охлаждающая жидкость', f.coolant],
-        ['Тормозная жидкость', f.brake_fluid],
-        ['Усилитель руля (ГУР)', f.power_steering],
-        ['Хладагент кондиционера', f.refrigerant]
-    ];
+    const rows = [['Моторное масло', f.engine_oil], ['Масло КПП', f.gearbox_oil], ['Масло раздатки', f.transfer_case],
+        ['Масло переднего редуктора', f.diff_front], ['Масло заднего редуктора', f.diff_rear],
+        ['Охлаждающая жидкость', f.coolant], ['Тормозная жидкость', f.brake_fluid],
+        ['Усилитель руля (ГУР)', f.power_steering], ['Хладагент кондиционера', f.refrigerant]];
     let html = '<tr><th>Жидкость</th><th>Объём</th><th>Допуск</th><th>Вязкость</th></tr>';
     rows.forEach(function(row) {
-        const name = row[0]; const data = row[1];
-        if (!data) html += '<tr><td class="fluid-name">' + name + '</td><td class="fluid-na" colspan="3">—</td></tr>';
-        else html += '<tr><td class="fluid-name">' + name + '</td><td>' + data.volume + '</td><td>' + data.spec + '</td><td>' + data.viscosity + '</td></tr>';
+        if (!row[1]) html += '<tr><td class="fluid-name">' + row[0] + '</td><td class="fluid-na" colspan="3">—</td></tr>';
+        else html += '<tr><td class="fluid-name">' + row[0] + '</td><td>' + row[1].volume + '</td><td>' + row[1].spec + '</td><td>' + row[1].viscosity + '</td></tr>';
     });
     if ($('fluidsTable')) $('fluidsTable').innerHTML = html;
     if ($('fluidsPanel')) $('fluidsPanel').classList.add('active');
 }
 
-// --- WORKS LIST ---
 function renderWorks(mod) {
     const container = $('worksList');
     container.innerHTML = '';
@@ -516,9 +448,8 @@ function onWorksListClick(e) {
         const item = expandBtn.closest('.work-item');
         item.classList.toggle('includes-expanded');
         let incList = item.nextElementSibling;
-        if (incList && incList.classList.contains('includes-list')) {
-            incList.classList.toggle('expanded');
-        } else {
+        if (incList && incList.classList.contains('includes-list')) incList.classList.toggle('expanded');
+        else {
             const w = worksCatalog[wid];
             if (w && w.includes) {
                 const list = el('div', 'includes-list');
@@ -526,8 +457,7 @@ function onWorksListClick(e) {
                     const inc = worksCatalog[incId];
                     if (inc) {
                         const incPrice = workPrice(inc.nh, inc.rateType);
-                        list.insertAdjacentHTML('beforeend',
-                            '<div class="include-item"><span>' + inc.name + '</span><span>' + inc.nh + ' н/ч · ' + formatRub(incPrice) + '</span></div>');
+                        list.insertAdjacentHTML('beforeend', '<div class="include-item"><span>' + inc.name + '</span><span>' + inc.nh + ' н/ч · ' + formatRub(incPrice) + '</span></div>');
                     }
                 });
                 list.classList.add('expanded');
@@ -545,31 +475,21 @@ function toggleWork(workId, itemEl) {
     const w = worksCatalog[workId];
     if (!w) return;
     const idx = selectedWorks.findIndex(function(sw) { return sw.workId === workId; });
-    if (idx >= 0) {
-        selectedWorks.splice(idx, 1);
-        itemEl.classList.remove('selected');
-        expandedIncludes.delete(workId);
-    } else {
+    if (idx >= 0) { selectedWorks.splice(idx, 1); itemEl.classList.remove('selected'); expandedIncludes.delete(workId); }
+    else {
         const customNh = (currentMod && currentMod.customNh && currentMod.customNh[workId]) ? currentMod.customNh[workId] : null;
         const finalNh = customNh || w.nh;
         const price = workPrice(finalNh, w.rateType);
-        selectedWorks.push({
-            workId: workId, nh: finalNh, price: price, rateType: w.rateType,
-            name: w.name, includes: w.includes || null, coefficients: []
-        });
+        selectedWorks.push({ workId: workId, nh: finalNh, price: price, rateType: w.rateType, name: w.name, includes: w.includes || null, coefficients: [] });
         itemEl.classList.add('selected');
     }
     renderCalc();
 }
 
-// --- CALC PANEL ---
 function renderCalc() {
     const body = $('calcBody');
     if (!body) return;
-    if (selectedWorks.length === 0) {
-        body.innerHTML = '<div class="calc-empty">Выберите работы из списка слева</div>';
-        return;
-    }
+    if (selectedWorks.length === 0) { body.innerHTML = '<div class="calc-empty">Выберите работы из списка слева</div>'; return; }
     let html = '';
     let totalWorks = 0;
     let totalCoeff = 0;
@@ -579,8 +499,7 @@ function renderCalc() {
         let coeffSum = 0;
         sw.coefficients.forEach(function(c) { coeffSum += c.rub; });
         html += '<div class="calc-work-card' + (hasIncludes ? ' has-includes' : '') + '" data-index="' + i + '">';
-        html += '<div class="calc-work-header">';
-        html += '<span class="calc-work-name">' + sw.name + '</span>';
+        html += '<div class="calc-work-header"><span class="calc-work-name">' + sw.name + '</span>';
         if (hasIncludes) html += '<span class="expand-btn" data-calc-wid="' + sw.workId + '" style="cursor:pointer;font-size:14px;width:20px;height:20px;display:flex;align-items:center;justify-content:center;border-radius:3px;flex-shrink:0;">' + (isIncExpanded ? '−' : '+') + '</span>';
         html += '<span class="calc-work-remove" data-index="' + i + '">×</span></div>';
         html += '<div class="calc-work-info"><span>' + sw.nh + ' н/ч · ' + formatRub(sw.price) + '</span><span class="calc-work-price">' + formatRub(sw.price + coeffSum) + '</span></div>';
@@ -588,34 +507,26 @@ function renderCalc() {
             html += '<div class="includes-list expanded" style="padding:4px 0 4px 12px;">';
             sw.includes.forEach(function(incId) {
                 const inc = worksCatalog[incId];
-                if (inc) {
-                    const incPrice = workPrice(inc.nh, inc.rateType);
-                    html += '<div class="include-item"><span>' + inc.name + '</span><span>' + inc.nh + ' н/ч · ' + formatRub(incPrice) + '</span></div>';
-                }
+                if (inc) html += '<div class="include-item"><span>' + inc.name + '</span><span>' + inc.nh + ' н/ч · ' + formatRub(workPrice(inc.nh, inc.rateType)) + '</span></div>';
             });
             html += '</div>';
         }
         html += '<div class="coeff-row" data-index="' + i + '">';
-        if (sw.coefficients.length > 0) {
-            sw.coefficients.forEach(function(c, ci) {
-                html += '<div class="coeff-display">' + CONFIG.coefficients[c.type].label + ': +' + c.percent + '% <span class="coeff-rub">(' + formatRub(c.rub) + ')</span> <span class="coeff-remove" data-cindex="' + ci + '">убрать</span></div>';
-            });
-        }
+        sw.coefficients.forEach(function(c, ci) {
+            html += '<div class="coeff-display">' + CONFIG.coefficients[c.type].label + ': +' + c.percent + '% <span class="coeff-rub">(' + formatRub(c.rub) + ')</span> <span class="coeff-remove" data-cindex="' + ci + '">убрать</span></div>';
+        });
         html += '<select class="coeff-add" data-index="' + i + '"><option value="">+ Добавить коэффициент</option>';
         Object.keys(CONFIG.coefficients).forEach(function(ck) {
-            const already = sw.coefficients.some(function(c) { return c.type === ck; });
-            if (!already) html += '<option value="' + ck + '">' + CONFIG.coefficients[ck].label + ' (+' + CONFIG.coefficients[ck].percent + '%)</option>';
+            if (!sw.coefficients.some(function(c) { return c.type === ck; })) html += '<option value="' + ck + '">' + CONFIG.coefficients[ck].label + ' (+' + CONFIG.coefficients[ck].percent + '%)</option>';
         });
         html += '</select></div></div>';
         totalWorks += sw.price + coeffSum;
         totalCoeff += coeffSum;
     });
-    html += '<div class="calc-total">';
-    html += '<div class="calc-total-row"><span>Работы:</span><span>' + formatRub(totalWorks - totalCoeff) + '</span></div>';
+    html += '<div class="calc-total"><div class="calc-total-row"><span>Работы:</span><span>' + formatRub(totalWorks - totalCoeff) + '</span></div>';
     if (totalCoeff > 0) html += '<div class="calc-total-row"><span>Коэффициенты:</span><span>+' + formatRub(totalCoeff) + '</span></div>';
     html += '<div class="calc-total-row final"><span>Итого:</span><span>' + formatRub(totalWorks) + '</span></div></div>';
     body.innerHTML = html;
-
     body.querySelectorAll('.calc-work-remove').forEach(function(btn) {
         btn.onclick = function(e) {
             e.stopPropagation();
@@ -660,7 +571,6 @@ function renderCalc() {
     });
 }
 
-// --- SAVE CALCULATION ---
 function saveCalculation() {
     if (isSaving || selectedWorks.length === 0 || !currentMod) return;
     isSaving = true;
@@ -673,20 +583,11 @@ function saveCalculation() {
         return sum + sw.price + coeffSum;
     }, 0);
     const record = {
-        id: Date.now(),
-        date: new Date().toISOString(),
-        manager: mgrLabel,
+        id: Date.now(), date: new Date().toISOString(), manager: mgrLabel,
         modificationId: currentMod.id,
         carLabel: (currentBrand ? currentBrand.name : '') + ' ' + currentMod.model + ' ' + currentMod.generation + ' ' + currentMod.engine.code,
-        worksCount: selectedWorks.length,
-        total: total,
-        works: selectedWorks.map(function(sw) {
-            return {
-                workId: sw.workId,
-                nh: sw.nh,
-                coefficients: sw.coefficients.map(function(c) { return c.type; })
-            };
-        })
+        worksCount: selectedWorks.length, total: total,
+        works: selectedWorks.map(function(sw) { return { workId: sw.workId, nh: sw.nh, coefficients: sw.coefficients.map(function(c) { return c.type; }) }; })
     };
     let history = [];
     try { history = JSON.parse(localStorage.getItem('nemesia_history') || '[]'); } catch(e) {}
@@ -697,28 +598,18 @@ function saveCalculation() {
     renderHistory();
     showToast('Расчёт сохранён');
 
-    // Отправка в облако (с полем data для восстановления)
     if (CONFIG.cloudUrl) {
         cloudSend({
-            action: 'addCalc',
-            date: record.date,
-            manager: record.manager,
-            carLabel: record.carLabel,
-            worksCount: record.worksCount,
-            total: record.total,
+            action: 'addCalc', date: record.date, manager: record.manager, carLabel: record.carLabel,
+            worksCount: record.worksCount, total: record.total,
             worksList: selectedWorks.map(function(sw) { return sw.name + ' (' + sw.nh + ' н/ч)'; }).join('; '),
             coeffs: selectedWorks.filter(function(sw) { return sw.coefficients.length > 0; })
-                .map(function(sw) {
-                    return sw.name + ': ' + sw.coefficients.map(function(c) {
-                        return CONFIG.coefficients[c.type].label + ' +' + c.percent + '%';
-                    }).join(', ');
-                }).join('; '),
+                .map(function(sw) { return sw.name + ': ' + sw.coefficients.map(function(c) { return CONFIG.coefficients[c.type].label + ' +' + c.percent + '%'; }).join(', '); }).join('; '),
             data: record
         });
     }
 }
 
-// --- RESTORE ---
 function showRestoreToast(data) {
     if (!$('toastText') || !$('toastButtons') || !$('toast')) return;
     $('toastText').innerHTML = 'Восстановить последний расчёт?<br><strong>' + data.carLabel + '</strong> — ' + data.worksCount + ' работ, ' + formatRub(data.total);
@@ -753,17 +644,13 @@ function restoreCalc(data) {
             if (!c) return null;
             return { type: cType, percent: c.percent, rub: Math.round(price * c.percent / 100) };
         }).filter(Boolean);
-        selectedWorks.push({
-            workId: sw.workId, nh: nh, price: price, rateType: w.rateType,
-            name: w.name, includes: w.includes || null, coefficients: coefficients
-        });
+        selectedWorks.push({ workId: sw.workId, nh: nh, price: price, rateType: w.rateType, name: w.name, includes: w.includes || null, coefficients: coefficients });
     });
     renderWorks(mod);
     renderCalc();
     showToast('Расчёт восстановлен');
 }
 
-// --- HISTORY ---
 function renderHistory() {
     let history = [];
     try { history = JSON.parse(localStorage.getItem('nemesia_history') || '[]'); } catch(e) {}
@@ -782,14 +669,12 @@ function renderHistory() {
     });
 }
 
-// --- CLEAR ALL ---
 function clearAll() {
     selectedWorks = [];
     expandedCats.clear(); expandedIncludes.clear();
     currentMod = null;
     if ($('brandSelect')) $('brandSelect').value = '';
-    resetSelect('modelSelect'); resetSelect('genSelect');
-    resetSelect('engineSelect'); resetSelect('gearboxSelect'); resetSelect('driveSelect');
+    resetSelect('modelSelect'); resetSelect('genSelect'); resetSelect('engineSelect'); resetSelect('gearboxSelect'); resetSelect('driveSelect');
     if ($('globalSearch')) $('globalSearch').value = '';
     if ($('worksSearch')) $('worksSearch').value = '';
     if ($('fluidsPanel')) $('fluidsPanel').classList.remove('active');
@@ -798,7 +683,6 @@ function clearAll() {
     showToast('Все поля очищены');
 }
 
-// --- ADD REQUEST ---
 function submitVin() {
     const vin = $('vinInput') ? $('vinInput').value.trim() : '';
     const comment = $('vinComment') ? $('vinComment').value.trim() : '';
@@ -807,78 +691,33 @@ function submitVin() {
     if (!description && !vin) { showToast('Опишите запрос или введите VIN'); return; }
     const mgrSel = $('managerSelect');
     const mgrName = mgrSel ? CONFIG.managers.find(function(m) { return m.id === mgrSel.value; }) : null;
-    const item = {
-        id: Date.now(), type: addType, description: description,
-        vin: vin, comment: comment, date: new Date().toISOString(),
-        manager: mgrName ? mgrName.name : '—'
-    };
-    let queue = [];
-    try { queue = JSON.parse(localStorage.getItem('nemesia_vinQueue') || '[]'); } catch(e) {}
-    queue.push(item);
-    localStorage.setItem('nemesia_vinQueue', JSON.stringify(queue));
+    const item = { id: Date.now(), type: addType, description: description, vin: vin, comment: comment, date: new Date().toISOString(), manager: mgrName ? mgrName.name : '—' };
+
     closeAddModal();
     if ($('vinInput')) $('vinInput').value = '';
     if ($('vinComment')) $('vinComment').value = '';
     if ($('addDescription')) $('addDescription').value = '';
 
     if (CONFIG.cloudUrl) {
-        cloudSend({
-            action: 'addRequest', type: addType, description: description,
-            vin: vin, comment: comment, date: item.date, manager: item.manager
-        }).then(function(ok) {
-            if (ok) {
-                queue = [];
-                localStorage.setItem('nemesia_vinQueue', JSON.stringify(queue));
-                showToast('Запрос отправлен в общую очередь');
-            } else {
-                showToast('Запрос сохранён локально (нет связи с облаком)');
-            }
-            renderVinQueue();
-        });
+        showToast('Отправляем запрос...');
+        cloudSend({ action: 'addRequest', type: addType, description: description, vin: vin, comment: comment, date: item.date, manager: item.manager })
+            .then(function(ok) { showToast(ok ? 'Запрос отправлен в общую очередь' : 'Нет связи: запрос сохранён локально'); });
     } else {
+        let queue = [];
+        try { queue = JSON.parse(localStorage.getItem('nemesia_vinQueue') || '[]'); } catch(e) {}
+        queue.push(item);
+        localStorage.setItem('nemesia_vinQueue', JSON.stringify(queue));
         showToast('Запрос добавлен (облако не подключено)');
-        renderVinQueue();
     }
 }
 
-function renderVinQueue() {
-    const container = $('vinQueueList');
-    if (!container) return;
-    let queue = [];
-    try { queue = JSON.parse(localStorage.getItem('nemesia_vinQueue') || '[]'); } catch(e) {}
-    if (queue.length === 0) { container.innerHTML = '<div class="queue-empty">Очередь пуста</div>'; return; }
-    container.innerHTML = queue.map(function(item, i) {
-        return '<div class="queue-item">' +
-            '<div class="queue-type"><strong>' + (item.type || 'Запрос') + '</strong></div>' +
-            (item.description ? '<div class="queue-desc">' + item.description + '</div>' : '') +
-            (item.vin ? '<div class="queue-vin">VIN: ' + item.vin + '</div>' : '') +
-            (item.comment ? '<div class="queue-comment">' + item.comment + '</div>' : '') +
-            '<div class="queue-manager">' + item.manager + ' · ' + new Date(item.date).toLocaleString('ru-RU', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'}) + '</div>' +
-            '<button class="queue-remove" data-index="' + i + '">×</button></div>';
-    }).join('');
-    container.querySelectorAll('.queue-remove').forEach(function(btn) {
-        btn.onclick = function() {
-            const idx = parseInt(btn.dataset.index);
-            let q = [];
-            try { q = JSON.parse(localStorage.getItem('nemesia_vinQueue') || '[]'); } catch(e) {}
-            q.splice(idx, 1);
-            localStorage.setItem('nemesia_vinQueue', JSON.stringify(q));
-            renderVinQueue();
-        };
-    });
-}
-
-// --- HELPERS ---
 function fillSelect(id, labels, values) {
     const sel = $(id);
     if (!sel) return;
     sel.disabled = false;
     sel.innerHTML = '<option value="">— выбрать —</option>';
-    if (values) {
-        labels.forEach(function(l, i) { sel.insertAdjacentHTML('beforeend', '<option value="' + values[i] + '">' + l + '</option>'); });
-    } else {
-        labels.forEach(function(l) { sel.insertAdjacentHTML('beforeend', '<option value="' + l + '">' + l + '</option>'); });
-    }
+    if (values) labels.forEach(function(l, i) { sel.insertAdjacentHTML('beforeend', '<option value="' + values[i] + '">' + l + '</option>'); });
+    else labels.forEach(function(l) { sel.insertAdjacentHTML('beforeend', '<option value="' + l + '">' + l + '</option>'); });
 }
 
 function resetSelect(id) {
