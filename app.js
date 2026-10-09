@@ -124,13 +124,20 @@ function renderBrandTiles() {
         tile.dataset.brand = b.id;
         tile.title = b.name;
         const img = document.createElement('img');
-        img.src = brandLogoPath(b);
-        img.alt = b.name;
         const txt = el('span', 'brand-tile-text', b.name);
+        const candidates = b.logo ? [b.logo] : ['img/brands/' + b.id + '.svg', 'img/brands/' + b.id + '.png'];
+        let ci = 0;
         img.onerror = function() {
-            img.style.display = 'none';
-            txt.style.display = 'block';
+            ci++;
+            if (ci < candidates.length) {
+                img.src = candidates[ci];
+            } else {
+                img.style.display = 'none';
+                txt.style.display = 'block';
+            }
         };
+        img.alt = b.name;
+        img.src = candidates[0];
         tile.appendChild(img);
         tile.appendChild(txt);
         tile.onclick = function() {
