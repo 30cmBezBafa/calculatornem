@@ -13,23 +13,14 @@ let searchResults = [];
 let journalItems = [];
 let historyItems = [];
 
-// Иконки категорий работ
 const CAT_ICONS = {
     to: '🛢️', engine: '⚙️', engine_big: '🏗️', gearbox: '🔄', awd: '🧭',
     suspension: '🌀', brakes: '🛑', steering: '🛞', electrics: '⚡', exhaust: '💨'
 };
 
-// Фирменные названия полного привода по маркам
 const AWD_NAMES = {
-    volkswagen: '4MOTION',
-    audi: 'QUATTRO',
-    bmw: 'xDrive',
-    mercedes: '4MATIC',
-    porsche: 'AWD',
-    skoda: '4x4',
-    seat: '4Drive',
-    mini: 'ALL4',
-    alpine: '4WD'
+    volkswagen: '4MOTION', audi: 'QUATTRO', bmw: 'xDrive', mercedes: '4MATIC',
+    porsche: 'AWD', skoda: '4x4', seat: '4Drive', mini: 'ALL4', alpine: '4WD'
 };
 
 const $ = function(id) { return document.getElementById(id); };
@@ -52,23 +43,16 @@ function debounce(fn, ms) {
     };
 }
 
-// Привод: красивая надпись
 function driveLabel(drive, brandId) {
     if (!drive) return drive;
-    if (drive.indexOf('Полный') !== -1) {
-        const name = AWD_NAMES[brandId] || 'AWD';
-        return name + ' — Полный привод';
-    }
+    if (drive.indexOf('Полный') !== -1) return (AWD_NAMES[brandId] || 'AWD') + ' — Полный привод';
     if (drive.indexOf('Передн') !== -1) return 'FWD — Передний привод';
     if (drive.indexOf('Задн') !== -1) return 'RWD — Задний привод';
     return drive;
 }
 
-function currentBrandId() {
-    return currentBrand ? currentBrand.id : 'volkswagen';
-}
+function currentBrandId() { return currentBrand ? currentBrand.id : 'volkswagen'; }
 
-// Тип ГРМ: явное поле timing или по работам модификации
 function timingLabel(mod) {
     if (mod.timing) return mod.timing;
     if (mod.works) {
@@ -78,13 +62,11 @@ function timingLabel(mod) {
     return null;
 }
 
-// Тип КПП с заглавной буквы
 function capType(t) {
     if (!t) return t;
     return String(t).replace(/(^|[\s(])([a-zа-яё])/g, function(m, p1, p2) { return p1 + p2.toUpperCase(); });
 }
 
-// Единый длинный прочерк
 function dash(v) {
     if (v === null || v === undefined) return '—';
     const s = String(v).trim();
@@ -111,7 +93,7 @@ function cloudGet(action) {
         .catch(function() { return { ok: false }; });
 }
 
-// --- ADD OPTIONS / MODALS ---
+// --- MODALS ---
 function addAddOption(selectId, labelText) {
     const sel = $(selectId);
     if (!sel) return;
@@ -141,10 +123,7 @@ function openJournal() {
     if (!overlay) return;
     overlay.classList.add('active');
     const list = $('journalList');
-    if (!CONFIG.cloudUrl) {
-        if (list) list.innerHTML = '<div class="calc-empty">Облако не подключено</div>';
-        return;
-    }
+    if (!CONFIG.cloudUrl) { if (list) list.innerHTML = '<div class="calc-empty">Облако не подключено</div>'; return; }
     if (list) list.innerHTML = '<div class="calc-empty">Загружаем журнал...</div>';
     cloudGet('getCalcs').then(function(j) {
         journalItems = (j && j.ok && j.items) ? j.items : [];
@@ -165,25 +144,18 @@ function renderJournalList(filter) {
         if (!q) return true;
         return (it.carLabel || '').toLowerCase().includes(q) || (it.manager || '').toLowerCase().includes(q);
     });
-    if (items.length === 0) {
-        list.innerHTML = '<div class="calc-empty">Ничего не найдено</div>';
-        return;
-    }
+    if (items.length === 0) { list.innerHTML = '<div class="calc-empty">Ничего не найдено</div>'; return; }
     list.innerHTML = items.map(function(it) {
         return '<div class="history-card" data-row="' + it.row + '">' +
             '<div class="h-row"><span class="h-car">' + (it.carLabel || '—') + '</span><span class="h-sum">' + formatRub(it.total || 0) + '</span></div>' +
             '<div class="h-date">' + (it.date || '') + ' · ' + (it.manager || '—') + '</div>' +
-            '<div class="h-works">' + (it.worksCount || 0) + ' работ' + (it.data ? '' : ' · (старая запись, не восстанавливается)') + '</div>' +
-            '</div>';
+            '<div class="h-works">' + (it.worksCount || 0) + ' работ' + (it.data ? '' : ' · (старая запись, не восстанавливается)') + '</div></div>';
     }).join('');
     list.querySelectorAll('.history-card').forEach(function(card) {
         card.onclick = function() {
             const row = parseInt(card.dataset.row);
             const it = journalItems.find(function(x) { return x.row === row; });
-            if (!it || !it.data || !it.data.modificationId) {
-                showToast('В этой записи нет данных для восстановления');
-                return;
-            }
+            if (!it || !it.data || !it.data.modificationId) { showToast('В этой записи нет данных для восстановления'); return; }
             closeJournal();
             restoreCalc(it.data);
             showToast('Расчёт загружен из журнала');
@@ -197,12 +169,9 @@ function renderHistory() {
     if (!section) return;
     const list = $('historyList');
     if (!list) return;
-
     if (!CONFIG.cloudUrl) { renderLocalHistory(); return; }
-
     section.style.display = 'block';
     list.innerHTML = '<div class="calc-empty" style="padding:12px 20px">Загружаем...</div>';
-
     cloudGet('getCalcs').then(function(j) {
         if (!j || !j.ok) { renderLocalHistory(); return; }
         historyItems = (j.items || []).slice(0, 5);
@@ -210,15 +179,11 @@ function renderHistory() {
         list.innerHTML = historyItems.map(function(it) {
             return '<div class="history-card" data-row="' + it.row + '">' +
                 '<div class="h-row"><span class="h-car">' + (it.carLabel || '—') + '</span>' +
-                '<span style="display:flex;align-items:center;gap:6px;">' +
-                '<span class="h-sum">' + formatRub(it.total || 0) + '</span>' +
-                '<span class="h-del" data-row="' + it.row + '" title="Удалить из общего журнала" style="cursor:pointer;color:var(--text-light);font-size:16px;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;border-radius:3px;flex-shrink:0;">×</span>' +
-                '</span></div>' +
+                '<span style="display:flex;align-items:center;gap:6px;"><span class="h-sum">' + formatRub(it.total || 0) + '</span>' +
+                '<span class="h-del" data-row="' + it.row + '" title="Удалить из общего журнала" style="cursor:pointer;color:var(--text-light);font-size:16px;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;border-radius:3px;flex-shrink:0;">×</span></span></div>' +
                 '<div class="h-date">' + (it.date || '') + ' · ' + (it.manager || '—') + '</div>' +
-                '<div class="h-works">' + (it.worksCount || 0) + ' работ' + (it.data ? '' : ' · (без данных восстановления)') + '</div>' +
-                '</div>';
+                '<div class="h-works">' + (it.worksCount || 0) + ' работ' + (it.data ? '' : ' · (без данных восстановления)') + '</div></div>';
         }).join('');
-
         list.querySelectorAll('.h-del').forEach(function(btn) {
             btn.onclick = function(e) {
                 e.stopPropagation();
@@ -230,16 +195,12 @@ function renderHistory() {
                 });
             };
         });
-
         list.querySelectorAll('.history-card').forEach(function(card) {
             card.onclick = function(e) {
                 if (e.target.classList.contains('h-del')) return;
                 const row = parseInt(card.dataset.row);
                 const it = historyItems.find(function(x) { return x.row === row; });
-                if (!it || !it.data || !it.data.modificationId) {
-                    showToast('В этой записи нет данных для восстановления');
-                    return;
-                }
+                if (!it || !it.data || !it.data.modificationId) { showToast('В этой записи нет данных для восстановления'); return; }
                 restoreCalc(it.data);
                 showToast('Расчёт загружен из общего журнала');
             };
@@ -267,7 +228,7 @@ function renderLocalHistory() {
     });
 }
 
-// --- WORK ITEM TEMPLATE ---
+// --- WORK ITEM (data-searchname для чистого поиска) ---
 function workItemHTML(workId, work, price, inCalc, customNh) {
     const rateLabel = work.rateType === 'engine' ? 'ДВС/КПП' : '';
     const badge = rateLabel ? '<span class="rate-badge ' + work.rateType + '">' + rateLabel + '</span>' : '';
@@ -277,7 +238,7 @@ function workItemHTML(workId, work, price, inCalc, customNh) {
     const confidenceDot = '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + dotColor + ';margin-left:6px;" title="' + dotTitle + '"></span>';
     const hasIncludes = work.includes && work.includes.length > 0;
     const expandBtn = hasIncludes ? '<span class="expand-btn" data-work-id="' + workId + '" data-context="list">+</span>' : '';
-    return '<div class="work-item' + (inCalc ? ' selected' : '') + (hasIncludes ? ' has-includes' : '') + '" data-work-id="' + workId + '" tabindex="0">' +
+    return '<div class="work-item' + (inCalc ? ' selected' : '') + (hasIncludes ? ' has-includes' : '') + '" data-work-id="' + workId + '" data-searchname="' + work.name + '" tabindex="0">' +
         '<span class="checkbox"></span>' +
         '<span class="work-name">' + work.name + badge + '</span>' +
         '<span class="work-nh">' + nhLabel + confidenceDot + '</span>' +
@@ -506,7 +467,7 @@ document.addEventListener('click', function(e) {
     }
 });
 
-// --- WORKS SEARCH ---
+// --- WORKS SEARCH (ищет ТОЛЬКО по названию работы, бейдж не учитывается) ---
 function onWorksSearch() {
     const q = $('worksSearch').value.trim().toLowerCase();
     const cats = document.querySelectorAll('.work-category');
@@ -523,7 +484,8 @@ function onWorksSearch() {
         }
         let visible = 0;
         cat.querySelectorAll('.work-item').forEach(function(w) {
-            const match = w.querySelector('.work-name').textContent.toLowerCase().includes(q);
+            const pureName = (w.getAttribute('data-searchname') || '').toLowerCase();
+            const match = pureName.includes(q);
             w.style.display = match ? '' : 'none';
             if (match) visible++;
         });
@@ -532,7 +494,7 @@ function onWorksSearch() {
     });
 }
 
-// --- FLUIDS (только жидкости, без ГРМ и привода) ---
+// --- FLUIDS ---
 function renderFluids(mod) {
     const f = mod.fluids;
     const rows = [
@@ -642,7 +604,7 @@ function toggleWork(workId, itemEl) {
     renderCalc();
 }
 
-// --- CALC PANEL ---
+// --- CALC ---
 function renderCalc() {
     const body = $('calcBody');
     if (!body) return;
@@ -755,7 +717,6 @@ function saveCalculation() {
     localStorage.setItem('nemesia_history', JSON.stringify(history));
     localStorage.setItem('nemesia_lastCalc', JSON.stringify(record));
     showToast('Расчёт сохранён');
-
     if (CONFIG.cloudUrl) {
         cloudSend({
             action: 'addCalc', date: record.date, manager: record.manager, carLabel: record.carLabel,
@@ -837,12 +798,10 @@ function submitVin() {
     const mgrSel = $('managerSelect');
     const mgrName = mgrSel ? CONFIG.managers.find(function(m) { return m.id === mgrSel.value; }) : null;
     const item = { id: Date.now(), type: addType, description: description, vin: vin, comment: comment, date: new Date().toISOString(), manager: mgrName ? mgrName.name : '—' };
-
     closeAddModal();
     if ($('vinInput')) $('vinInput').value = '';
     if ($('vinComment')) $('vinComment').value = '';
     if ($('addDescription')) $('addDescription').value = '';
-
     if (CONFIG.cloudUrl) {
         showToast('Отправляем запрос...');
         cloudSend({ action: 'addRequest', type: addType, description: description, vin: vin, comment: comment, date: item.date, manager: item.manager })
