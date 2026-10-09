@@ -1,6 +1,5 @@
 (function() {
 'use strict';
-
 const $ = function(id) { return document.getElementById(id); };
 const el = function(tag, cls, html) {
     const e = document.createElement(tag);
@@ -80,7 +79,6 @@ function saveCoeffs() {
     showToast('Коэффициенты сохранены');
 }
 
-// --- СПИСОК КОЭФФИЦИЕНТОВ + ДОБАВЛЕНИЕ ---
 function renderCoeffs() {
     const box = $('coeffList');
     if (!box) return;
@@ -123,7 +121,6 @@ function addCoeff() {
     showToast('Коэффициент добавлен');
 }
 
-// --- MANAGERS ---
 function renderManagers() {
     const tbody = $('managersTable');
     if (!tbody) return;
@@ -151,7 +148,6 @@ function addManager() {
     showToast('Менеджер добавлен');
 }
 
-// --- VIN QUEUE ---
 function renderVinQueue() {
     const container = $('vinQueueList');
     if (!container) return;
@@ -233,7 +229,6 @@ function downloadJson(data) {
     URL.revokeObjectURL(a.href);
 }
 
-// --- ADD MODIFICATION ---
 function initModForm() {
     const brandSel = $('modBrand');
     if (!brandSel) return;
@@ -280,6 +275,7 @@ function saveMod() {
     const engineVol = $('modEngineVol').value.trim();
     const enginePower = $('modEnginePower').value.trim();
     const engineTorque = $('modEngineTorque').value.trim();
+    const timing = $('modTiming') ? $('modTiming').value.trim() : '';
     const gbCode = $('modGbCode').value.trim();
     const gbType = $('modGbType').value.trim();
     const gbGears = parseInt($('modGbGears').value) || 0;
@@ -312,6 +308,7 @@ function saveMod() {
         },
         works: works
     };
+    if (timing) newMod.timing = timing;
     let brandData = null;
     if (brandId === 'volkswagen' && typeof volkswagenDB !== 'undefined') brandData = volkswagenDB;
     if (!brandData) {
