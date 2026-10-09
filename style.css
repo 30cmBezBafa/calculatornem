@@ -525,3 +525,42 @@ button, select, input, textarea { font-family: inherit; }
     .admin-row { grid-template-columns: 1fr; }
     .admin-row > .admin-btn { justify-self: stretch; width: 100%; }
 }
+/* ============================================
+КАЛЬКУЛЯТОР — МОБИЛЬНАЯ ДОВОДКА v2
+============================================ */
+@media (max-width: 900px) {
+    .header { gap: 8px; padding: 8px 10px; }
+    .header-logo { font-size: 15px; gap: 6px; }
+    .logo-img { height: 26px; }
+    .logo-badge { width: 22px; height: 22px; font-size: 12px; }
+    .manager-block { padding: 4px 8px; gap: 6px; }
+    .manager-block select { max-width: 110px; }
+    .main-container { padding: 10px; gap: 10px; }
+    .right-panel { gap: 12px; }
+    .toast { left: 16px; right: 16px; max-width: none; }
+    .work-item .work-price { min-width: 64px; }
+    .work-item .work-nh { margin-right: 6px; }
+    .includes-list { padding-left: 24px; }
+    .calc-work-card { padding: 10px; }
+    .modal .modal-buttons { flex-wrap: wrap; }
+}
+@media (max-width: 560px) {
+    .brand-tiles { grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 6px; }
+    .brand-tile { height: 42px; padding: 4px; }
+    .brand-tile.active { padding: 3px; }
+    .calc-buttons { gap: 6px; }
+    .calc-btn { font-size: 11px; padding: 10px 4px; letter-spacing: 0.3px; }
+    .car-selector h2, .fluids-panel h2, .works-panel h2, .calc-panel h2 { font-size: 12px; }
+    .select-group label { font-size: 9px; }
+    .history-card .h-car { font-size: 12px; }
+    .history-card .h-sum { font-size: 12px; }
+}
+@media (max-width: 400px) {
+    .header { padding: 6px 8px; gap: 6px; }
+    .header-btn { padding: 5px 8px; font-size: 10px; }
+    .theme-toggle { font-size: 12px; }
+    .calc-total-row.final { font-size: 15px; }
+    .work-item { padding: 10px 8px 10px 10px; }
+    .work-item .work-name { font-size: 12px; }
+    .work-item .work-price { font-size: 12px; min-width: 58px; }
+}
