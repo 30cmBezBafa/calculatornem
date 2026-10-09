@@ -1,15 +1,8 @@
 // ============================================
-// НЕМЕЦИЯ — АДМИНКА (финальная сборка)
+// НЕМЕЦИЯ — АДМИНКА (v10: дубли уехали в core.js)
 // ============================================
 (function() {
 'use strict';
-const $ = function(id) { return document.getElementById(id); };
-const el = function(tag, cls, html) {
-    const e = document.createElement(tag);
-    if (cls) e.className = cls;
-    if (html !== undefined) e.innerHTML = html;
-    return e;
-};
 
 let SESSION = null;
 let EDIT_ID = null;
@@ -27,24 +20,6 @@ function catIcon(k) {
 const BRAND_PREFIX = { volkswagen: 'vw', mercedes: 'mb' };
 function brandIdPrefix(brandId) {
     return BRAND_PREFIX[brandId] || brandId;
-}
-
-function cloudSend(payload) {
-    if (!CONFIG.cloudUrl) return Promise.resolve(false);
-    return fetch(CONFIG.cloudUrl, {
-        method: 'POST',
-        body: JSON.stringify(payload),
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
-    }).then(function(r) { return r.json(); })
-      .then(function(j) { return !!(j && j.ok); })
-      .catch(function() { return false; });
-}
-
-function cloudGet(query) {
-    if (!CONFIG.cloudUrl) return Promise.resolve({ ok: false });
-    return fetch(CONFIG.cloudUrl + '?' + query)
-        .then(function(r) { return r.json(); })
-        .catch(function() { return { ok: false }; });
 }
 
 function log(act, details) {
@@ -77,20 +52,6 @@ function writeSession(mgr) {
 function clearSession() {
     SESSION = null;
     localStorage.removeItem('nemesia_admin_session');
-}
-
-function fmtShort(iso) {
-    const d = new Date(iso);
-    if (isNaN(d.getTime())) return String(iso || '');
-    return d.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
-}
-
-function cleanDate(s) {
-    const str = String(s || '');
-    if (str.indexOf('GMT') === -1) return str;
-    const d = new Date(str);
-    if (isNaN(d.getTime())) return str;
-    return d.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
 }
 
 // --- ВХОД ---
@@ -364,29 +325,6 @@ function drawQueue(container, cloudItems, localItems, cloudError) {
 }
 
 // --- ФОРМА МОДИФИКАЦИИ ---
-function brandDBByName(varName) {
-    if (window[varName]) return window[varName];
-    try {
-        return eval('typeof ' + varName + ' !== "undefined" ? ' + varName + ' : null');
-    } catch (e) {
-        return null;
-    }
-}
-
-function ensureBrandData(brandId) {
-    const b = CONFIG.brands.find(function(x) { return x.id === brandId; });
-    if (!b) return Promise.resolve(null);
-    const existing = brandDBByName(b.varName);
-    if (existing) return Promise.resolve(existing);
-    return new Promise(function(res) {
-        const s = document.createElement('script');
-        s.src = b.file;
-        s.onload = function() { res(brandDBByName(b.varName)); };
-        s.onerror = function() { res(null); };
-        document.head.appendChild(s);
-    });
-}
-
 function currentTempMod() {
     const pfSel = $('modPf').value;
     return {
@@ -496,7 +434,7 @@ function loadEditOptions() {
     const brandId = $('modBrand').value;
     const sel = $('modEditSelect');
     sel.innerHTML = '<option value="">— новая модификация —</option>';
-    ensureBrandData(brandId).then(function(db) {
+    ensureBrand(brandId).then(function(db) {
         brandDataCache = db;
         if (!db) return;
         db.modifications.forEach(function(m) {
@@ -602,7 +540,7 @@ function saveMod() {
     if (awdSys) newMod.awdSys = awdSys;
     if (pfSel === 'yes') newMod.pf = true;
     if (pfSel === 'no') newMod.pf = false;
-    ensureBrandData(brandId).then(function(db) {
+    ensureBrand(brandId).then(function(db) {
         if (!db) { showToast('База марки не загружена'); return; }
         if (EDIT_ID) {
             const idx = db.modifications.findIndex(function(x) { return x.id === EDIT_ID; });
