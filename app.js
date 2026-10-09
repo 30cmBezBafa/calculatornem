@@ -1,5 +1,5 @@
 // ============================================
-// НЕМЕЦИЯ — ОСНОВНАЯ ЛОГИКА (v7: бирки + ленивая подгрузка марок)
+// НЕМЕЦИЯ — ОСНОВНАЯ ЛОГИКА (v8: плитки марок с логотипами)
 // ============================================
 (function() {
 'use strict';
@@ -16,7 +16,6 @@ let searchResults = [];
 let journalItems = [];
 let historyItems = [];
 
-// Локальные фолбэки, если config.js старый (без CAT_ICONS / AWD_NAMES)
 const ICON_FALLBACK = {
     to: '🛢️', diag: '🔬', engine: '⚙️', engine_big: '🏗️', gearbox: '🔄', awd: '🧭',
     suspension: '🌀', brakes: '🛑', steering: '🛞', electrics: '⚡', climate: '❄️', exhaust: '💨'
@@ -56,8 +55,7 @@ function debounce(fn, ms) {
     };
 }
 
-// --- СПИСОК РАБОТ МОДИФИКАЦИИ ---
-// Старая схема (массив works) или новая (сборка по биркам через collectWorks из config)
+// --- СПИСОК РАБОТ: старая схема (works) или новая (бирки) ---
 function worksFor(mod) {
     if (mod.works && mod.works.length) {
         const gt = mod.gearboxType || null;
@@ -72,7 +70,6 @@ function worksFor(mod) {
     return [];
 }
 
-// Тип ГРМ для подписи в селекторе ДВС
 function timingLabel(mod) {
     if (mod.timing) return mod.timing;
     if (!mod.works && typeof buildPassport === 'function') {
@@ -113,9 +110,54 @@ function dash(v) {
     return s;
 }
 
+// --- ПЛИТКИ МАРОК С ЛОГОТИПАМИ ---
+function brandLogoPath(b) {
+    return b.logo || ('img/brands/' + b.id + '.png');
+}
+
+function renderBrandTiles() {
+    const box = $('brandTiles');
+    if (!box) return;
+    box.innerHTML = '';
+    CONFIG.brands.forEach(function(b) {
+        const tile = el('div', 'brand-tile');
+        tile.dataset.brand = b.id;
+        tile.title = b.name;
+        const img = document.createElement('img');
+        img.src = brandLogoPath(b);
+        img.alt = b.name;
+        const txt = el('span', 'brand-tile-text', b.name);
+        img.onerror = function() {
+            img.style.display = 'none';
+            txt.style.display = 'block';
+        };
+        tile.appendChild(img);
+        tile.appendChild(txt);
+        tile.onclick = function() {
+            const sel = $('brandSelect');
+            if (sel) sel.value = b.id;
+            onBrandChange();
+        };
+        box.appendChild(tile);
+    });
+    const addTile = el('div', 'brand-tile brand-tile-add');
+    addTile.textContent = '+ Добавить марку';
+    addTile.onclick = function() { openAddModal('Марка'); };
+    box.appendChild(addTile);
+    syncBrandTiles();
+}
+
+function syncBrandTiles() {
+    const box = $('brandTiles');
+    if (!box) return;
+    const cur = currentBrand ? currentBrand.id : '';
+    box.querySelectorAll('.brand-tile').forEach(function(t) {
+        t.classList.toggle('active', t.dataset.brand === cur);
+    });
+}
+
 // --- ЛЕНИВАЯ ПОДГРУЗКА ФАЙЛА МАРКИ ---
 // Базы марок объявлены через const, поэтому их НЕТ в window.
-// Ищем базу по имени переменной из config через eval.
 function brandDBByName(varName) {
     if (window[varName]) return window[varName];
     try {
@@ -332,12 +374,12 @@ function init() {
         brandSel.disabled = false;
         brandSel.innerHTML = '<option value="">— выбрать —</option>' +
             CONFIG.brands.map(function(b) { return '<option value="' + b.id + '">' + b.name + '</option>'; }).join('');
-        addAddOption('brandSelect', 'марку');
         brandSel.onchange = function() {
             if (brandSel.value === '__add__') { openAddModal('Марка'); brandSel.value = ''; return; }
             onBrandChange();
         };
     }
+    renderBrandTiles();
 
     ['modelSelect', 'genSelect', 'engineSelect', 'gearboxSelect', 'driveSelect'].forEach(function(id) {
         const types = { modelSelect: 'Модель', genSelect: 'Поколение', engineSelect: 'ДВС', gearboxSelect: 'КПП', driveSelect: 'Привод' };
@@ -385,7 +427,6 @@ function init() {
 
     renderHistory();
 
-    // Прогреваем базу Volkswagen на старте
     ensureBrand('volkswagen').then(function(db) {
         if (db) {
             currentBrandData = db;
@@ -402,6 +443,7 @@ function onBrandChange() {
     const brandId = $('brandSelect').value;
     if (!brandId) return Promise.resolve();
     currentBrand = CONFIG.brands.find(function(b) { return b.id === brandId; });
+    syncBrandTiles();
     resetSelect('modelSelect'); resetSelect('genSelect'); resetSelect('engineSelect');
     resetSelect('gearboxSelect'); resetSelect('driveSelect');
     expandedCats.clear(); expandedIncludes.clear();
@@ -534,7 +576,9 @@ function onSearchKeydown(e) {
 function selectFromSearch(mod) {
     $('searchDropdown').classList.remove('active');
     $('globalSearch').value = '';
-    $('brandSelect').value = mod.id.split('_')[0] === 'vw' ? 'volkswagen' : (currentBrand ? currentBrand.id : 'volkswagen');
+    const prefix = mod.id.split('_')[0];
+    const brand = CONFIG.brands.find(function(b) { return mod.id.indexOf(b.id) === 0; });
+    $('brandSelect').value = brand ? brand.id : (prefix === 'vw' ? 'volkswagen' : 'volkswagen');
     onBrandChange().then(function() {
         $('modelSelect').value = mod.model; onModelChange();
         $('genSelect').value = mod.generation; onGenChange();
@@ -829,8 +873,8 @@ function showRestoreToast(data) {
 }
 
 function restoreCalc(data) {
-    const brandId = data.modificationId.split('_')[0] === 'vw' ? 'volkswagen' : (currentBrand ? currentBrand.id : 'volkswagen');
-    $('brandSelect').value = brandId;
+    const brand = CONFIG.brands.find(function(b) { return data.modificationId.indexOf(b.id) === 0; });
+    $('brandSelect').value = brand ? brand.id : 'volkswagen';
     onBrandChange().then(function() {
         if (!currentBrandData) return;
         const mod = currentBrandData.modifications.find(function(m) { return m.id === data.modificationId; });
@@ -864,7 +908,9 @@ function clearAll() {
     selectedWorks = [];
     expandedCats.clear(); expandedIncludes.clear();
     currentMod = null;
+    currentBrand = null;
     if ($('brandSelect')) $('brandSelect').value = '';
+    syncBrandTiles();
     resetSelect('modelSelect'); resetSelect('genSelect'); resetSelect('engineSelect'); resetSelect('gearboxSelect'); resetSelect('driveSelect');
     if ($('globalSearch')) $('globalSearch').value = '';
     if ($('worksSearch')) $('worksSearch').value = '';
