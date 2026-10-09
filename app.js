@@ -1,3 +1,6 @@
+// ============================================
+// НЕМЕЦИЯ — ОСНОВНАЯ ЛОГИКА (v7: бирки + ленивая подгрузка марок)
+// ============================================
 (function() {
 'use strict';
 
@@ -13,14 +16,14 @@ let searchResults = [];
 let journalItems = [];
 let historyItems = [];
 
-const CAT_ICONS = {
-    to: '🛢️', engine: '⚙️', engine_big: '🏗️', gearbox: '🔄', awd: '🧭',
-    suspension: '🌀', brakes: '🛑', steering: '🛞', electrics: '⚡', exhaust: '💨', diag: '🔬', climate: '❄️'
+// Локальные фолбэки, если config.js старый (без CAT_ICONS / AWD_NAMES)
+const ICON_FALLBACK = {
+    to: '🛢️', diag: '🔬', engine: '⚙️', engine_big: '🏗️', gearbox: '🔄', awd: '🧭',
+    suspension: '🌀', brakes: '🛑', steering: '🛞', electrics: '⚡', climate: '❄️', exhaust: '💨'
 };
-
-const AWD_NAMES = {
-    volkswagen: '4MOTION', audi: 'QUATTRO', bmw: 'xDrive', mercedes: '4MATIC',
-    porsche: 'AWD', skoda: '4x4', seat: '4Drive', mini: 'ALL4', alpine: '4WD'
+const AWD_FALLBACK = {
+    volkswagen: '4MOTION', audi: 'QUATTRO', skoda: '4x4', seat: '4Drive',
+    porsche: 'PTM', bmw: 'xDrive', mini: 'ALL4', alpina: 'xDrive', mercedes: '4MATIC'
 };
 
 const $ = function(id) { return document.getElementById(id); };
@@ -30,6 +33,16 @@ const el = function(tag, cls, html) {
     if (html !== undefined) e.innerHTML = html;
     return e;
 };
+
+function catIcon(key) {
+    if (typeof CAT_ICONS !== 'undefined' && CAT_ICONS[key]) return CAT_ICONS[key];
+    return ICON_FALLBACK[key] || '';
+}
+
+function awdName(brandId) {
+    const map = (typeof AWD_NAMES !== 'undefined') ? AWD_NAMES : AWD_FALLBACK;
+    return map[brandId] || 'AWD';
+}
 
 function getRate(rateType) { return CONFIG.rates[rateType] || CONFIG.rates.standard; }
 function workPrice(nh, rateType) { return nh * getRate(rateType); }
@@ -43,24 +56,50 @@ function debounce(fn, ms) {
     };
 }
 
-function driveLabel(drive, brandId) {
-    if (!drive) return drive;
-    if (drive.indexOf('Полный') !== -1) return (AWD_NAMES[brandId] || 'AWD') + ' — Полный привод';
-    if (drive.indexOf('Передн') !== -1) return 'FWD — Передний привод';
-    if (drive.indexOf('Задн') !== -1) return 'RWD — Задний привод';
-    return drive;
+// --- СПИСОК РАБОТ МОДИФИКАЦИИ ---
+// Старая схема (массив works) или новая (сборка по биркам через collectWorks из config)
+function worksFor(mod) {
+    if (mod.works && mod.works.length) {
+        const gt = mod.gearboxType || null;
+        return mod.works.filter(function(wid) {
+            const w = worksCatalog[wid];
+            if (!w) return false;
+            if (w.gearboxType && gt && w.gearboxType.indexOf(gt) === -1) return false;
+            return true;
+        });
+    }
+    if (typeof collectWorks === 'function') return collectWorks(mod);
+    return [];
 }
 
-function currentBrandId() { return currentBrand ? currentBrand.id : 'volkswagen'; }
-
+// Тип ГРМ для подписи в селекторе ДВС
 function timingLabel(mod) {
     if (mod.timing) return mod.timing;
+    if (!mod.works && typeof buildPassport === 'function') {
+        const p = buildPassport(mod);
+        if (p.timing) return p.timing === 'belt' ? 'Ремень' : 'Цепь';
+    }
     if (mod.works) {
         if (mod.works.indexOf('timing_belt') !== -1) return 'Ремень';
         if (mod.works.indexOf('timing_chain') !== -1) return 'Цепь';
     }
     return null;
 }
+
+function driveLabel(drive, brandId) {
+    if (!drive) return drive;
+    const d = String(drive).toLowerCase();
+    if (d.indexOf('полный') !== -1 || d === 'awd' || d.indexOf('4wd') !== -1 ||
+        d.indexOf('quattro') !== -1 || d.indexOf('xdrive') !== -1 ||
+        d.indexOf('4motion') !== -1 || d.indexOf('4matic') !== -1) {
+        return awdName(brandId) + ' — Полный привод';
+    }
+    if (d.indexOf('задн') !== -1 || d === 'rwd') return 'RWD — Задний привод';
+    if (d.indexOf('передн') !== -1 || d === 'fwd') return 'FWD — Передний привод';
+    return drive;
+}
+
+function currentBrandId() { return currentBrand ? currentBrand.id : 'volkswagen'; }
 
 function capType(t) {
     if (!t) return t;
@@ -72,6 +111,20 @@ function dash(v) {
     const s = String(v).trim();
     if (s === '' || s === '-') return '—';
     return s;
+}
+
+// --- ЛЕНИВАЯ ПОДГРУЗКА ФАЙЛА МАРКИ ---
+function ensureBrand(brandId) {
+    const b = CONFIG.brands.find(function(x) { return x.id === brandId; });
+    if (!b) return Promise.resolve(null);
+    if (window[b.varName]) return Promise.resolve(window[b.varName]);
+    return new Promise(function(res) {
+        const s = document.createElement('script');
+        s.src = b.file;
+        s.onload = function() { res(window[b.varName] || null); };
+        s.onerror = function() { res(null); };
+        document.head.appendChild(s);
+    });
 }
 
 // --- CLOUD ---
@@ -228,7 +281,7 @@ function renderLocalHistory() {
     });
 }
 
-// --- WORK ITEM (data-searchname для чистого поиска) ---
+// --- WORK ITEM TEMPLATE ---
 function workItemHTML(workId, work, price, inCalc, customNh) {
     const rateLabel = work.rateType === 'engine' ? 'ДВС/КПП' : '';
     const badge = rateLabel ? '<span class="rate-badge ' + work.rateType + '">' + rateLabel + '</span>' : '';
@@ -319,25 +372,38 @@ function init() {
     }
 
     renderHistory();
-    if (typeof volkswagenDB !== 'undefined') {
-        currentBrandData = volkswagenDB;
-        validateWorks(volkswagenDB, 'Volkswagen');
-    }
+
+    // Прогреваем базу Volkswagen на старте
+    ensureBrand('volkswagen').then(function(db) {
+        if (db) {
+            currentBrandData = db;
+            if (typeof validateWorks === 'function') {
+                const errors = validateWorks(db, 'Volkswagen');
+                if (errors.length > 0) console.warn('Validation errors:', errors);
+            }
+        }
+    });
 }
 
 // --- SELECT CHAIN ---
 function onBrandChange() {
     const brandId = $('brandSelect').value;
-    if (!brandId) return;
+    if (!brandId) return Promise.resolve();
     currentBrand = CONFIG.brands.find(function(b) { return b.id === brandId; });
-    currentBrandData = (brandId === 'volkswagen' && typeof volkswagenDB !== 'undefined') ? volkswagenDB : null;
-    if (!currentBrandData) { openAddModal('Марка'); return; }
     resetSelect('modelSelect'); resetSelect('genSelect'); resetSelect('engineSelect');
     resetSelect('gearboxSelect'); resetSelect('driveSelect');
     expandedCats.clear(); expandedIncludes.clear();
-    const models = [...new Set(currentBrandData.modifications.map(function(m) { return m.model; }))].sort();
-    fillSelect('modelSelect', models);
-    addAddOption('modelSelect', 'модель');
+    return ensureBrand(brandId).then(function(db) {
+        currentBrandData = db;
+        if (!db) { openAddModal('Марка'); return; }
+        if (typeof validateWorks === 'function') {
+            const errors = validateWorks(db, currentBrand ? currentBrand.name : brandId);
+            if (errors.length > 0) console.warn('Validation errors:', errors);
+        }
+        const models = [...new Set(db.modifications.map(function(m) { return m.model; }))].sort();
+        fillSelect('modelSelect', models);
+        addAddOption('modelSelect', 'модель');
+    });
 }
 
 function onModelChange() {
@@ -414,8 +480,12 @@ function onSearchInput() {
     const q = $('globalSearch').value.trim().toLowerCase();
     const dropdown = $('searchDropdown');
     if (!q) { dropdown.classList.remove('active'); return; }
-    if (!currentBrandData && typeof volkswagenDB !== 'undefined') currentBrandData = volkswagenDB;
-    if (!currentBrandData) { dropdown.classList.remove('active'); return; }
+    if (!currentBrandData) {
+        ensureBrand('volkswagen').then(function(db) {
+            if (db) { currentBrandData = db; onSearchInput(); }
+        });
+        return;
+    }
     searchResults = currentBrandData.modifications.filter(function(m) {
         return m.model.toLowerCase().includes(q) || m.generation.toLowerCase().includes(q) ||
             m.engine.code.toLowerCase().includes(q) || m.gearbox.code.toLowerCase().includes(q) ||
@@ -452,12 +522,14 @@ function onSearchKeydown(e) {
 function selectFromSearch(mod) {
     $('searchDropdown').classList.remove('active');
     $('globalSearch').value = '';
-    $('brandSelect').value = 'volkswagen'; onBrandChange();
-    $('modelSelect').value = mod.model; onModelChange();
-    $('genSelect').value = mod.generation; onGenChange();
-    $('engineSelect').value = mod.id; onEngineChange();
-    $('gearboxSelect').value = mod.id; onGearboxChange();
-    $('driveSelect').value = mod.drive; onDriveChange();
+    $('brandSelect').value = mod.id.split('_')[0] === 'vw' ? 'volkswagen' : (currentBrand ? currentBrand.id : 'volkswagen');
+    onBrandChange().then(function() {
+        $('modelSelect').value = mod.model; onModelChange();
+        $('genSelect').value = mod.generation; onGenChange();
+        $('engineSelect').value = mod.id; onEngineChange();
+        $('gearboxSelect').value = mod.id; onGearboxChange();
+        $('driveSelect').value = mod.drive; onDriveChange();
+    });
 }
 
 document.addEventListener('click', function(e) {
@@ -467,7 +539,7 @@ document.addEventListener('click', function(e) {
     }
 });
 
-// --- WORKS SEARCH (ищет ТОЛЬКО по названию работы, бейдж не учитывается) ---
+// --- WORKS SEARCH (ищет только по чистому названию) ---
 function onWorksSearch() {
     const q = $('worksSearch').value.trim().toLowerCase();
     const cats = document.querySelectorAll('.work-category');
@@ -521,12 +593,11 @@ function renderFluids(mod) {
 function renderWorks(mod) {
     const container = $('worksList');
     container.innerHTML = '';
+    const list = worksFor(mod);
     const byCat = {};
-    const modGearboxType = mod.gearboxType || null;
-    mod.works.forEach(function(wid) {
+    list.forEach(function(wid) {
         const w = worksCatalog[wid];
         if (!w) return;
-        if (w.gearboxType && modGearboxType && !w.gearboxType.includes(modGearboxType)) return;
         if (!byCat[w.cat]) byCat[w.cat] = [];
         byCat[w.cat].push(wid);
     });
@@ -538,7 +609,7 @@ function renderWorks(mod) {
         const header = el('div', 'work-category-header');
         const isExpanded = expandedCats.has(catKey);
         if (isExpanded) { header.classList.add('expanded'); body.classList.add('expanded'); }
-        header.innerHTML = '<span class="arrow">▶</span> <span class="cat-icon">' + (CAT_ICONS[catKey] || '') + '</span> ' + categories[catKey] + ' <span class="count">' + byCat[catKey].length + '</span>';
+        header.innerHTML = '<span class="arrow">▶</span> <span class="cat-icon">' + catIcon(catKey) + '</span> ' + categories[catKey] + ' <span class="count">' + byCat[catKey].length + '</span>';
         header.onclick = function() {
             const expanded = header.classList.toggle('expanded');
             body.classList.toggle('expanded', expanded);
@@ -746,31 +817,34 @@ function showRestoreToast(data) {
 }
 
 function restoreCalc(data) {
-    if (!currentBrandData) return;
-    const mod = currentBrandData.modifications.find(function(m) { return m.id === data.modificationId; });
-    if (!mod) { showToast('Автомобиль не найден в базе'); return; }
-    $('brandSelect').value = 'volkswagen'; onBrandChange();
-    $('modelSelect').value = mod.model; onModelChange();
-    $('genSelect').value = mod.generation; onGenChange();
-    $('engineSelect').value = mod.id; onEngineChange();
-    $('gearboxSelect').value = mod.id; onGearboxChange();
-    $('driveSelect').value = mod.drive; onDriveChange();
-    selectedWorks = [];
-    data.works.forEach(function(sw) {
-        const w = worksCatalog[sw.workId];
-        if (!w) return;
-        const nh = sw.nh !== undefined ? sw.nh : w.nh;
-        const price = workPrice(nh, w.rateType);
-        const coefficients = (sw.coefficients || []).map(function(cType) {
-            const c = CONFIG.coefficients[cType];
-            if (!c) return null;
-            return { type: cType, percent: c.percent, rub: Math.round(price * c.percent / 100) };
-        }).filter(Boolean);
-        selectedWorks.push({ workId: sw.workId, nh: nh, price: price, rateType: w.rateType, name: w.name, includes: w.includes || null, coefficients: coefficients });
+    const brandId = data.modificationId.split('_')[0] === 'vw' ? 'volkswagen' : (currentBrand ? currentBrand.id : 'volkswagen');
+    $('brandSelect').value = brandId;
+    onBrandChange().then(function() {
+        if (!currentBrandData) return;
+        const mod = currentBrandData.modifications.find(function(m) { return m.id === data.modificationId; });
+        if (!mod) { showToast('Автомобиль не найден в базе'); return; }
+        $('modelSelect').value = mod.model; onModelChange();
+        $('genSelect').value = mod.generation; onGenChange();
+        $('engineSelect').value = mod.id; onEngineChange();
+        $('gearboxSelect').value = mod.id; onGearboxChange();
+        $('driveSelect').value = mod.drive; onDriveChange();
+        selectedWorks = [];
+        data.works.forEach(function(sw) {
+            const w = worksCatalog[sw.workId];
+            if (!w) return;
+            const nh = sw.nh !== undefined ? sw.nh : w.nh;
+            const price = workPrice(nh, w.rateType);
+            const coefficients = (sw.coefficients || []).map(function(cType) {
+                const c = CONFIG.coefficients[cType];
+                if (!c) return null;
+                return { type: cType, percent: c.percent, rub: Math.round(price * c.percent / 100) };
+            }).filter(Boolean);
+            selectedWorks.push({ workId: sw.workId, nh: nh, price: price, rateType: w.rateType, name: w.name, includes: w.includes || null, coefficients: coefficients });
+        });
+        renderWorks(mod);
+        renderCalc();
+        showToast('Расчёт восстановлен');
     });
-    renderWorks(mod);
-    renderCalc();
-    showToast('Расчёт восстановлен');
 }
 
 // --- CLEAR ---
