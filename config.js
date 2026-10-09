@@ -4,7 +4,7 @@
 const CONFIG = {
     // ВСТАВЬ СЮДА ссылку Apps Script (заканчивается на /exec).
     // Без неё журнал и общая история работают локально.
-    cloudUrl: '',
+    cloudUrl: 'https://script.google.com/macros/s/AKfycbxplPCM6GQDSTtZTz8LQn0qjPTPe7ElAbQbuB5sIxA0rkADtTgHTRPPwnooICmyj1C7/exec',
     rates: {
         engine: 3000,
         standard: 2500
