@@ -1,5 +1,5 @@
 // ============================================
-// НЕМЕЦИЯ — АДМИНКА (v10: дубли уехали в core.js)
+// НЕМЕЦИЯ — АДМИНКА (v11: константы марок уехали в core.js)
 // ============================================
 (function() {
 'use strict';
@@ -7,20 +7,6 @@
 let SESSION = null;
 let EDIT_ID = null;
 let brandDataCache = null;
-
-const CAT_ICONS_LOCAL = {
-    to: '🛢️', diag: '🔬', engine: '⚙️', engine_big: '🏗️', gearbox: '🔄', awd: '🧭',
-    suspension: '🌀', brakes: '🛑', steering: '🛞', electrics: '⚡', climate: '❄️', exhaust: '💨'
-};
-function catIcon(k) {
-    if (typeof CAT_ICONS !== 'undefined' && CAT_ICONS[k]) return CAT_ICONS[k];
-    return CAT_ICONS_LOCAL[k] || '';
-}
-
-const BRAND_PREFIX = { volkswagen: 'vw', mercedes: 'mb' };
-function brandIdPrefix(brandId) {
-    return BRAND_PREFIX[brandId] || brandId;
-}
 
 function log(act, details) {
     if (!SESSION) return;
@@ -507,7 +493,7 @@ function saveMod() {
     const pfSel = $('modPf').value;
     const driveRaw = $('modDrive').value;
     const awdSys = $('modAwdSys').value;
-    const drive = driveRaw === 'Полный' ? ('Полный (' + ((typeof AWD_NAMES !== 'undefined' ? AWD_NAMES[brandId] : '') || awdSys || '4WD') + (awdSys === 'torsen' ? ' Torsen' : '') + ')') : driveRaw;
+    const drive = driveRaw === 'Полный' ? ('Полный (' + (awdName(brandId) || awdSys || '4WD') + (awdSys === 'torsen' ? ' Torsen' : '') + ')') : driveRaw;
     const customNh = {};
     document.querySelectorAll('#modWorksList input[data-wid]').forEach(function(inp) {
         const v = parseFloat(inp.value);
@@ -569,8 +555,8 @@ function downloadConfig() {
         'const CONFIG = ' + JSON.stringify(CONFIG, null, 2) + ';\n\n' +
         '// Каталог работ\nconst worksCatalog = ' + JSON.stringify(worksCatalog, null, 2) + ';\n\n' +
         'const categories = ' + JSON.stringify(categories, null, 2) + ';\n\n' +
-        'const CAT_ICONS = ' + JSON.stringify((typeof CAT_ICONS !== 'undefined' ? CAT_ICONS : CAT_ICONS_LOCAL), null, 2) + ';\n\n' +
-        'const AWD_NAMES = ' + JSON.stringify((typeof AWD_NAMES !== 'undefined' ? AWD_NAMES : {}), null, 2) + ';\n\n' +
+        'const CAT_ICONS = ' + JSON.stringify((typeof CAT_ICONS !== 'undefined' ? CAT_ICONS : ICON_FALLBACK), null, 2) + ';\n\n' +
+        'const AWD_NAMES = ' + JSON.stringify((typeof AWD_NAMES !== 'undefined' ? AWD_NAMES : AWD_FALLBACK), null, 2) + ';\n\n' +
         'function buildPassport(mod) { ' + (typeof buildPassport === 'function' ? buildPassport.toString() : '') + ' }\n\n' +
         'function collectWorks(mod) { ' + (typeof collectWorks === 'function' ? collectWorks.toString() : '') + ' }\n\n' +
         'function validateWorks(brandData, brandName) { ' + (typeof validateWorks === 'function' ? validateWorks.toString() : '') + ' }';
