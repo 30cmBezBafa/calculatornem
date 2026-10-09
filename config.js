@@ -2,9 +2,8 @@
 // КОНФИГУРАЦИЯ СИСТЕМЫ
 // ============================================
 const CONFIG = {
-    // ВСТАВЬ СЮДА ссылку Apps Script (заканчивается на /exec).
-    // Без неё журнал и общая история работают локально.
-    cloudUrl: 'https://script.google.com/macros/s/AKfycbxplPCM6GQDSTtZTz8LQn0qjPTPe7ElAbQbuB5sIxA0rkADtTgHTRPPwnooICmyj1C7/exec',
+    // ВСТАВЬ СЮДА свою ссылку Apps Script (заканчивается на /exec)!
+    cloudUrl: '',
     rates: {
         engine: 3000,
         standard: 2500
@@ -15,12 +14,13 @@ const CONFIG = {
         lpg:          { label: 'Установлено ГБО',           percent: 10 }
     },
     managers: [
-        { id: 'm1', name: 'Влад' },
-        { id: 'm2', name: 'Иван' },
-        { id: 'm3', name: 'Сергей' }
+        { id: 'm1', name: 'Колесников А.Д.' },
+        { id: 'm2', name: 'Цыбайло П.В.' },
+        { id: 'm3', name: 'Шпехт В.В.' },
+        { id: 'm4', name: 'Ванжа М.С.' }
     ],
     brands: [
-        { id: 'volkswagen', name: 'VOLKSWAGEN', file: 'volkswagen.js' }
+        { id: 'volkswagen', name: 'Volkswagen', file: 'volkswagen.js' }
     ]
 };
 
