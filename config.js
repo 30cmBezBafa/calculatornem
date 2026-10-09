@@ -267,14 +267,17 @@ function buildPassport(mod) {
         passport.turbo = fam.turbo;
         passport.pf = fam.fuel === 'diesel' || (fam.fuel === 'petrol' && fam.injection === 'direct' && fam.turbo);
     }
+    // Ручной переопределитель сажевого фильтра (GPF/DPF): true / false / auto
+    if (mod.pf === true) passport.pf = true;
+    if (mod.pf === false) passport.pf = false;
     const gbFam = mod.gearbox && mod.gearbox.code && CONFIG.refs.gearboxFamilies[mod.gearbox.code];
     if (gbFam) passport.gbType = gbFam.gbType;
-    // Привод
     if (mod.drive) {
         const d = mod.drive.toLowerCase();
-        if (d.indexOf('полный') !== -1 || d === 'awd' || d.indexOf('4wd') !== -1 || d.indexOf('quattro') !== -1 || d.indexOf('xdrive') !== -1 || d.indexOf('4motion') !== -1 || d.indexOf('4matic') !== -1) {
+        if (d.indexOf('полный') !== -1 || d === 'awd' || d.indexOf('4wd') !== -1 ||
+            d.indexOf('quattro') !== -1 || d.indexOf('xdrive') !== -1 ||
+            d.indexOf('4motion') !== -1 || d.indexOf('4matic') !== -1) {
             passport.drive = 'awd';
-            // Система полного привода
             if (mod.awdSys) passport.awdSys = mod.awdSys;
             else if (d.indexOf('torsen') !== -1) passport.awdSys = 'torsen';
             else if (d.indexOf('haldex') !== -1) passport.awdSys = 'haldex';
@@ -285,10 +288,10 @@ function buildPassport(mod) {
             passport.drive = 'fwd';
         }
     }
-    if (mod.suspension) passport.suspension = mod.suspension;   // 'spring' | 'air'
-    if (mod.rear)       passport.rear = mod.rear;               // 'beam' | 'multilink'
-    if (mod.parking)    passport.parking = mod.parking;         // 'mech' | 'epb'
-    if (mod.battery)    passport.battery = mod.battery;         // 'hood' | 'trunk' | 'seat'
+    if (mod.suspension) passport.suspension = mod.suspension;
+    if (mod.rear)       passport.rear = mod.rear;
+    if (mod.parking)    passport.parking = mod.parking;
+    if (mod.battery)    passport.battery = mod.battery;
     return passport;
 }
 
