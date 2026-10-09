@@ -109,18 +109,45 @@
     </div>
 
     <!-- VIN MODAL -->
-    <div class="modal-overlay" id="vinModal">
-        <div class="modal">
-            <h3>Модификация не найдена</h3>
-            <p>Введите VIN автомобиля и комментарий — мы добавим модификацию в базу.</p>
-            <input type="text" id="vinInput" placeholder="VIN (17 символов)" maxlength="17">
-            <textarea id="vinComment" placeholder="Комментарий (что за машина, что нужно добавить)"></textarea>
-            <div class="modal-buttons">
-                <button class="modal-btn" id="vinCancel">Отмена</button>
-                <button class="modal-btn primary" id="vinSubmit">Отправить в очередь</button>
+    <!-- Модальное окно запроса на добавление -->
+<div id="vinModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Запрос на добавление в базу</h3>
+            <button class="modal-close" onclick="document.getElementById('vinModal').classList.remove('show')">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="modal-field">
+                <label>Что нужно добавить:</label>
+                <select id="addType">
+                    <option value="Марка">Марку</option>
+                    <option value="Модель">Модель</option>
+                    <option value="Поколение">Поколение</option>
+                    <option value="ДВС">Двигатель (ДВС)</option>
+                    <option value="КПП">Коробку передач (КПП)</option>
+                    <option value="Привод">Привод</option>
+                    <option value="Модификация целиком">Модификацию целиком</option>
+                </select>
+            </div>
+            <div class="modal-field">
+                <label>Описание (что именно нужно добавить):</label>
+                <textarea id="addDescription" rows="3" placeholder="Например: Audi A6 C8 3.0 TDI quattro, S-tronic DL382"></textarea>
+            </div>
+            <div class="modal-field">
+                <label>VIN автомобиля (если есть):</label>
+                <input type="text" id="vinInput" placeholder="WVWZZZ...">
+            </div>
+            <div class="modal-field">
+                <label>Комментарий (необязательно):</label>
+                <input type="text" id="vinComment" placeholder="Дополнительная информация">
             </div>
         </div>
+        <div class="modal-footer">
+            <button id="vinCancel" class="btn-secondary">Отмена</button>
+            <button id="vinSubmit" class="btn-primary">Отправить в очередь</button>
+        </div>
     </div>
+</div>
 
     <script src="config.js"></script>
     <script src="volkswagen.js"></script>
