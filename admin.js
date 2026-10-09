@@ -1,9 +1,8 @@
 // ============================================
-// НЕМЕЦИЯ — АДМИНКА (v8: логин, пароли, журнал изменений, редактирование)
+// НЕМЕЦИЯ — АДМИНКА (v9: очередь со статусами, без экспорта)
 // ============================================
 (function() {
 'use strict';
-
 const $ = function(id) { return document.getElementById(id); };
 const el = function(tag, cls, html) {
     const e = document.createElement(tag);
@@ -12,9 +11,9 @@ const el = function(tag, cls, html) {
     return e;
 };
 
-let SESSION = null;          // { id, name, exp }
-let EDIT_ID = null;          // id редактируемой модификации
-let brandDataCache = null;   // загруженная база выбранной марки
+let SESSION = null;
+let EDIT_ID = null;
+let brandDataCache = null;
 
 const CAT_ICONS_LOCAL = {
     to: '🛢️', diag: '🔬', engine: '⚙️', engine_big: '🏗️', gearbox: '🔄', awd: '🧭',
@@ -25,7 +24,6 @@ function catIcon(k) {
     return CAT_ICONS_LOCAL[k] || '';
 }
 
-// --- CLOUD ---
 function cloudSend(payload) {
     if (!CONFIG.cloudUrl) return Promise.resolve(false);
     return fetch(CONFIG.cloudUrl, {
@@ -44,13 +42,11 @@ function cloudGet(query) {
         .catch(function() { return { ok: false }; });
 }
 
-// Журнал изменений
 function log(act, details) {
     if (!SESSION) return;
     cloudSend({ action: 'addLog', manager: SESSION.name, act: act, details: details || '', date: new Date().toISOString() });
 }
 
-// --- HASH ---
 function sha256(text) {
     if (window.crypto && crypto.subtle && window.TextEncoder) {
         return crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)).then(function(buf) {
@@ -62,7 +58,6 @@ function sha256(text) {
     return Promise.resolve('fb' + h1.toString(16) + h2.toString(16));
 }
 
-// --- SESSION ---
 function readSession() {
     try {
         const s = JSON.parse(localStorage.getItem('nemesia_admin_session') || 'null');
@@ -79,7 +74,6 @@ function clearSession() {
     localStorage.removeItem('nemesia_admin_session');
 }
 
-// --- LOGIN ---
 function initLogin() {
     const sel = $('loginManager');
     sel.innerHTML = CONFIG.managers.map(function(m) { return '<option value="' + m.id + '">' + m.name + '</option>'; }).join('');
@@ -94,13 +88,11 @@ function doLogin() {
     const mgr = CONFIG.managers.find(function(m) { return m.id === $('loginManager').value; });
     const pass = $('loginPass').value;
     if (!mgr || !pass) { err.textContent = 'Выберите менеджера и введите пароль.'; return; }
-
     cloudGet('action=getPass&m=' + encodeURIComponent(mgr.id)).then(function(j) {
         const stored = (j && j.ok) ? (j.hash || '') : null;
         if (stored === null) { err.textContent = 'Облако недоступно.'; return; }
         sha256(pass).then(function(hash) {
             if (stored === '') {
-                // Первичная установка пароля
                 const pass2 = $('loginPass2').value;
                 if ($('setupFields').style.display === 'none') {
                     $('setupFields').style.display = 'block';
@@ -133,7 +125,6 @@ function enter(mgr) {
     startAdmin();
 }
 
-// --- INIT ADMIN ---
 function startAdmin() {
     if ($('rateEngine')) $('rateEngine').value = CONFIG.rates.engine;
     if ($('rateStandard')) $('rateStandard').value = CONFIG.rates.standard;
@@ -150,14 +141,12 @@ function startAdmin() {
     if ($('addManagerBtn')) $('addManagerBtn').onclick = addManager;
 
     renderVinQueue();
-    if ($('exportVinBtn')) $('exportVinBtn').onclick = exportVinQueue;
 
     if ($('logoutBtn')) $('logoutBtn').onclick = function() {
         log('Выход из админки', '');
         clearSession();
         location.reload();
     };
-
     if ($('chgPassBtn')) $('chgPassBtn').onclick = changePass;
 
     initModForm();
@@ -183,7 +172,6 @@ function changePass() {
     });
 }
 
-// --- RATES / COEFFS ---
 function saveRates() {
     const oldE = CONFIG.rates.engine, oldS = CONFIG.rates.standard;
     CONFIG.rates.engine = parseInt($('rateEngine').value) || 3000;
@@ -239,7 +227,6 @@ function addCoeff() {
     showToast('Коэффициент добавлен');
 }
 
-// --- MANAGERS ---
 function renderManagers() {
     const tbody = $('managersTable');
     if (!tbody) return;
@@ -269,7 +256,9 @@ function addManager() {
     showToast('Менеджер добавлен');
 }
 
-// --- VIN QUEUE ---
+// --- ОЧЕРЕДЬ ЗАЯВОК v2: старые сверху, новые внизу, максимум 3 в кадре, статусы ---
+const STATUSES = ['Новая', 'В работе', 'Завершена'];
+
 function renderVinQueue() {
     const container = $('vinQueueList');
     if (!container) return;
@@ -278,7 +267,8 @@ function renderVinQueue() {
     if (!CONFIG.cloudUrl) { drawQueue(container, [], localQueue, false); return; }
     container.innerHTML = '<div class="queue-empty">Загружаем из облака...</div>';
     cloudGet('action=getRequests').then(function(j) {
-        const cloudItems = (j && j.ok && j.items) ? j.items : [];
+        let cloudItems = (j && j.ok && j.items) ? j.items : [];
+        cloudItems = cloudItems.slice().reverse(); // старые сверху, новые внизу
         drawQueue(container, cloudItems, localQueue, !j.ok);
     });
 }
@@ -288,23 +278,28 @@ function drawQueue(container, cloudItems, localItems, cloudError) {
     let bodyHtml = '';
     localItems.forEach(function(item, i) {
         bodyHtml += '<div class="queue-item"><div class="queue-header"><span class="queue-type-badge" style="background:var(--danger);color:#fff">ждёт отправки</span>' +
-            '<span class="queue-date">' + new Date(item.date).toLocaleString('ru-RU', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'}) + '</span></div>' +
+            '<span class="queue-date">' + fmtShort(item.date) + '</span></div>' +
             (item.description ? '<div class="queue-desc"><strong>Описание:</strong> ' + item.description + '</div>' : '') +
             (item.vin ? '<div class="queue-vin"><strong>VIN:</strong> ' + item.vin + '</div>' : '') +
-            '<div class="queue-manager">Менеджер: ' + (item.manager || '—') + '</div>' +
+            '<div class="queue-foot"><span class="queue-manager">Менеджер: ' + (item.manager || '—') + '</span></div>' +
             '<button class="queue-remove" data-local="' + i + '" title="Удалить">×</button></div>';
     });
     cloudItems.forEach(function(item) {
+        const opts = STATUSES.map(function(st) {
+            return '<option value="' + st + '"' + ((item.status || 'Новая') === st ? ' selected' : '') + '>' + st + '</option>';
+        }).join('');
         bodyHtml += '<div class="queue-item"><div class="queue-header"><span class="queue-type-badge">' + (item.type || 'Запрос') + '</span>' +
             '<span class="queue-date">' + item.date + '</span></div>' +
             (item.description ? '<div class="queue-desc"><strong>Описание:</strong> ' + item.description + '</div>' : '') +
             (item.vin ? '<div class="queue-vin"><strong>VIN:</strong> ' + item.vin + '</div>' : '') +
             (item.comment ? '<div class="queue-comment"><strong>Комментарий:</strong> ' + item.comment + '</div>' : '') +
-            '<div class="queue-manager">Менеджер: ' + (item.manager || '—') + ' · Статус: ' + (item.status || '—') + '</div>' +
-            '<button class="queue-remove" data-row="' + item.row + '" title="Удалить из таблицы">×</button></div>';
+            '<div class="queue-foot"><span class="queue-manager">Менеджер: ' + (item.manager || '—') + '</span>' +
+            '<select class="queue-status" data-row="' + item.row + '" title="Статус заявки">' + opts + '</select></div>' +
+            '<button class="queue-remove" data-row="' + item.row + '" title="Удалить">×</button></div>';
     });
     if (bodyHtml === '') bodyHtml = '<div class="queue-empty">Очередь запросов пуста</div>';
     container.innerHTML = banner + bodyHtml;
+
     container.querySelectorAll('.queue-remove[data-local]').forEach(function(btn) {
         btn.onclick = function() {
             const idx = parseInt(btn.dataset.local);
@@ -320,29 +315,38 @@ function drawQueue(container, cloudItems, localItems, cloudError) {
         btn.onclick = function() {
             const row = parseInt(btn.dataset.row);
             cloudSend({ action: 'deleteRequest', row: row }).then(function(ok) {
-                if (ok) log('Удаление заявки', 'строка таблицы ' + row);
+                if (ok) log('Удаление заявки', 'строка ' + row);
                 renderVinQueue();
                 showToast('Заявка удалена из таблицы');
             });
         };
     });
-}
-
-function exportVinQueue() {
-    cloudGet('action=getRequests').then(function(j) {
-        const cloud = (j && j.ok && j.items) ? j.items : [];
-        let local_q = [];
-        try { local_q = JSON.parse(localStorage.getItem('nemesia_vinQueue') || '[]'); } catch(e) {}
-        const blob = new Blob([JSON.stringify({ cloud: cloud, localPending: local_q }, null, 2)], { type: 'application/json' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'vin_queue.json';
-        a.click();
-        URL.revokeObjectURL(a.href);
+    container.querySelectorAll('.queue-status').forEach(function(sel) {
+        sel.onchange = function() {
+            const row = parseInt(sel.dataset.row);
+            const status = sel.value;
+            cloudSend({ action: 'setStatus', row: row, status: status }).then(function(ok) {
+                if (!ok) { showToast('Не удалось сменить статус'); renderVinQueue(); return; }
+                if (status === 'Завершена') {
+                    log('Заявка завершена и удалена', 'строка ' + row);
+                    showToast('Заявка завершена и убрана из очереди');
+                } else {
+                    log('Смена статуса заявки', status + ' (строка ' + row + ')');
+                    showToast('Статус: ' + status);
+                }
+                renderVinQueue();
+            });
+        };
     });
 }
 
-// --- MOD FORM (паспорт + кастомные н/ч) ---
+function fmtShort(iso) {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return String(iso || '');
+    return d.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
+}
+
+// --- ФОРМА МОДИФИКАЦИИ ---
 function brandDBByName(varName) {
     if (window[varName]) return window[varName];
     try {
@@ -411,10 +415,8 @@ function refreshPassportPreview() {
 function renderCustomNhTable(mod) {
     const container = $('modWorksList');
     if (!container) return;
-    // Сохраняем уже введённые значения
     const saved = {};
     container.querySelectorAll('input[data-wid]').forEach(function(inp) { saved[inp.dataset.wid] = inp.value; });
-
     const list = (typeof collectWorks === 'function') ? collectWorks(mod) : [];
     const byCat = {};
     list.forEach(function(wid) {
@@ -423,7 +425,6 @@ function renderCustomNhTable(mod) {
         if (!byCat[w.cat]) byCat[w.cat] = [];
         byCat[w.cat].push(wid);
     });
-
     container.innerHTML = '';
     if (list.length === 0) {
         container.innerHTML = '<div style="font-size:12px;color:var(--text-muted);">Не удалось собрать список работ: проверьте коды ДВС и КПП по справочникам.</div>';
@@ -465,12 +466,10 @@ function initModForm() {
     };
     if ($('modEditSelect')) $('modEditSelect').onchange = function() { EDIT_ID = this.value || null; };
     if ($('modLoadBtn')) $('modLoadBtn').onclick = loadModIntoForm;
-
     ['modEngineCode', 'modGbCode', 'modDrive', 'modAwdSys', 'modSuspension', 'modRear', 'modParking', 'modBattery', 'modPf'].forEach(function(id) {
         const node = $(id);
         if (node) node.onchange = refreshPassportPreview;
     });
-
     loadEditOptions();
     refreshPassportPreview();
     if ($('saveModBtn')) $('saveModBtn').onclick = saveMod;
@@ -528,7 +527,6 @@ function loadModIntoForm() {
     $('flAcVol').value = f.refrigerant ? f.refrigerant.volume : '';
     $('flAcSpec').value = f.refrigerant ? f.refrigerant.spec : '';
     refreshPassportPreview();
-    // Подставляем сохранённые кастомные н/ч
     const cn = m.customNh || {};
     document.querySelectorAll('#modWorksList input[data-wid]').forEach(function(inp) {
         if (cn[inp.dataset.wid] !== undefined) inp.value = cn[inp.dataset.wid];
@@ -547,7 +545,6 @@ function saveMod() {
     const gbCode = $('modGbCode').value.trim();
     if (!CONFIG.refs.engineCodes[engineCode]) { showToast('Код ДВС не найден в справочнике семейств'); return; }
     if (!CONFIG.refs.gearboxFamilies[gbCode]) { showToast('Код КПП не найден в справочнике семейств'); return; }
-
     function fluidOrEmpty(vol, spec, visc) {
         if (!vol && !spec) return null;
         return { volume: vol || '-', spec: spec || '-', viscosity: visc || '-' };
@@ -556,13 +553,11 @@ function saveMod() {
     const driveRaw = $('modDrive').value;
     const awdSys = $('modAwdSys').value;
     const drive = driveRaw === 'Полный' ? ('Полный (' + ((typeof AWD_NAMES !== 'undefined' ? AWD_NAMES[brandId] : '') || awdSys || '4WD') + (awdSys === 'torsen' ? ' Torsen' : '') + ')') : driveRaw;
-
     const customNh = {};
     document.querySelectorAll('#modWorksList input[data-wid]').forEach(function(inp) {
         const v = parseFloat(inp.value);
         if (v > 0) customNh[inp.dataset.wid] = v;
     });
-
     const newMod = {
         id: EDIT_ID || (brandId + '_' + engineCode.toLowerCase() + '_' + Date.now().toString(36)),
         model: model,
@@ -590,12 +585,8 @@ function saveMod() {
     if (awdSys) newMod.awdSys = awdSys;
     if (pfSel === 'yes') newMod.pf = true;
     if (pfSel === 'no') newMod.pf = false;
-
     ensureBrandData(brandId).then(function(db) {
-        if (!db) {
-            showToast('База марки не загружена');
-            return;
-        }
+        if (!db) { showToast('База марки не загружена'); return; }
         if (EDIT_ID) {
             const idx = db.modifications.findIndex(function(x) { return x.id === EDIT_ID; });
             if (idx === -1) { showToast('Модификация не найдена'); return; }
@@ -613,11 +604,10 @@ function saveMod() {
         a.download = brandId + '.js';
         a.click();
         URL.revokeObjectURL(a.href);
-        showToast('Файл ' + brandId + '.js скачан — замените им старый и запушьте');
+        showToast('Файл ' + brandId + '.js скачан — положите его в папку brands/ и запушьте');
     });
 }
 
-// --- DOWNLOAD CONFIG ---
 function downloadConfig() {
     const content = '// КОНФИГУРАЦИЯ СИСТЕМЫ (обновлено ' + new Date().toLocaleString('ru-RU') + ')\n' +
         'const CONFIG = ' + JSON.stringify(CONFIG, null, 2) + ';\n\n' +
@@ -641,7 +631,7 @@ function showToast(msg) {
     if (!toast) {
         toast = el('div');
         toast.id = 'adminToast';
-        toast.style.cssText = 'position:fixed;bottom:20px;right:20px;background:var(--bg-card);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:2px;padding:12px 16px;box-shadow:0 4px 12px rgba(0,0,0,0.12);font-size:13px;z-index:4000;display:none;max-width:320px';
+        toast.style.cssText = 'position:fixed;bottom:20px;right:20px;left:20px;background:var(--bg-card);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:2px;padding:12px 16px;box-shadow:0 4px 12px rgba(0,0,0,0.12);font-size:13px;z-index:4000;display:none;';
         document.body.appendChild(toast);
     }
     toast.textContent = msg;
@@ -649,7 +639,6 @@ function showToast(msg) {
     setTimeout(function() { toast.style.display = 'none'; }, 3000);
 }
 
-// --- BOOT ---
 function init() {
     const savedTheme = localStorage.getItem('nemesia_theme') || 'light';
     document.documentElement.setAttribute('data-theme', savedTheme);
