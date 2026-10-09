@@ -11,6 +11,7 @@ let isSaving = false;
 let searchActiveIndex = -1;
 let searchResults = [];
 let journalItems = [];
+let historyItems = [];
 
 const $ = function(id) { return document.getElementById(id); };
 const el = function(tag, cls, html) {
@@ -51,6 +52,7 @@ function cloudGet(action) {
         .catch(function() { return { ok: false }; });
 }
 
+// --- ADD OPTIONS / MODALS ---
 function addAddOption(selectId, labelText) {
     const sel = $(selectId);
     if (!sel) return;
@@ -74,6 +76,7 @@ function closeAddModal() {
     if (overlay) overlay.classList.remove('active');
 }
 
+// --- JOURNAL (полный архив) ---
 function openJournal() {
     const overlay = $('journalOverlay');
     if (!overlay) return;
@@ -129,6 +132,96 @@ function renderJournalList(filter) {
     });
 }
 
+// --- HISTORY (последние 5 из облака) ---
+function renderHistory() {
+    const section = $('historySection');
+    if (!section) return;
+    const list = $('historyList');
+    if (!list) return;
+
+    if (!CONFIG.cloudUrl) {
+        renderLocalHistory();
+        return;
+    }
+
+    const h3 = section.querySelector('h3');
+    if (h3) h3.textContent = 'Последние расчёты (общие)';
+    section.style.display = 'block';
+    list.innerHTML = '<div class="calc-empty" style="padding:12px 20px">Загружаем...</div>';
+
+    cloudGet('getCalcs').then(function(j) {
+        if (!j || !j.ok) {
+            renderLocalHistory();
+            return;
+        }
+        historyItems = (j.items || []).slice(0, 5);
+        if (historyItems.length === 0) {
+            section.style.display = 'none';
+            return;
+        }
+        list.innerHTML = historyItems.map(function(it) {
+            return '<div class="history-card" data-row="' + it.row + '">' +
+                '<div class="h-row"><span class="h-car">' + (it.carLabel || '—') + '</span>' +
+                '<span style="display:flex;align-items:center;gap:6px;">' +
+                '<span class="h-sum">' + formatRub(it.total || 0) + '</span>' +
+                '<span class="h-del" data-row="' + it.row + '" title="Удалить из общего журнала" style="cursor:pointer;color:var(--text-light);font-size:16px;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;border-radius:3px;flex-shrink:0;">×</span>' +
+                '</span></div>' +
+                '<div class="h-date">' + (it.date || '') + ' · ' + (it.manager || '—') + '</div>' +
+                '<div class="h-works">' + (it.worksCount || 0) + ' работ' + (it.data ? '' : ' · (без данных восстановления)') + '</div>' +
+                '</div>';
+        }).join('');
+
+        list.querySelectorAll('.h-del').forEach(function(btn) {
+            btn.onclick = function(e) {
+                e.stopPropagation();
+                const row = parseInt(btn.dataset.row);
+                if (!confirm('Удалить этот расчёт из общего журнала? Он исчезнет у всех менеджеров.')) return;
+                cloudSend({ action: 'deleteCalc', row: row }).then(function(ok) {
+                    showToast(ok ? 'Расчёт удалён из общего журнала' : 'Не удалось удалить');
+                    renderHistory();
+                });
+            };
+        });
+
+        list.querySelectorAll('.history-card').forEach(function(card) {
+            card.onclick = function(e) {
+                if (e.target.classList.contains('h-del')) return;
+                const row = parseInt(card.dataset.row);
+                const it = historyItems.find(function(x) { return x.row === row; });
+                if (!it || !it.data || !it.data.modificationId) {
+                    showToast('В этой записи нет данных для восстановления');
+                    return;
+                }
+                restoreCalc(it.data);
+                showToast('Расчёт загружен из общего журнала');
+            };
+        });
+    });
+}
+
+function renderLocalHistory() {
+    const section = $('historySection');
+    if (!section) return;
+    const list = $('historyList');
+    if (!list) return;
+    let history = [];
+    try { history = JSON.parse(localStorage.getItem('nemesia_history') || '[]'); } catch(e) {}
+    const h3 = section.querySelector('h3');
+    if (h3) h3.textContent = 'История (последние 5, локально)';
+    if (history.length === 0) { section.style.display = 'none'; return; }
+    section.style.display = 'block';
+    list.innerHTML = '';
+    history.forEach(function(h) {
+        const card = el('div', 'history-card');
+        card.innerHTML = '<div class="h-row"><span class="h-car">' + h.carLabel + '</span><span class="h-sum">' + formatRub(h.total) + '</span></div>' +
+            '<div class="h-date">' + new Date(h.date).toLocaleString('ru-RU') + ' · ' + h.manager + '</div>' +
+            '<div class="h-works">' + h.worksCount + ' работ</div>';
+        card.onclick = function() { restoreCalc(h); };
+        list.appendChild(card);
+    });
+}
+
+// --- WORK ITEM TEMPLATE ---
 function workItemHTML(workId, work, price, inCalc, customNh) {
     const rateLabel = work.rateType === 'engine' ? 'ДВС' : '';
     const badge = rateLabel ? '<span class="rate-badge ' + work.rateType + '">' + rateLabel + '</span>' : '';
@@ -147,6 +240,7 @@ function workItemHTML(workId, work, price, inCalc, customNh) {
         '</div>';
 }
 
+// --- INIT ---
 function init() {
     const savedTheme = localStorage.getItem('nemesia_theme') || 'light';
     document.documentElement.setAttribute('data-theme', savedTheme);
@@ -224,6 +318,7 @@ function init() {
     }
 }
 
+// --- SELECT CHAIN ---
 function onBrandChange() {
     const brandId = $('brandSelect').value;
     if (!brandId) return;
@@ -302,6 +397,7 @@ function onDriveChange() {
     if ($('worksPanel')) $('worksPanel').style.display = 'block';
 }
 
+// --- GLOBAL SEARCH ---
 function onSearchInput() {
     const q = $('globalSearch').value.trim().toLowerCase();
     const dropdown = $('searchDropdown');
@@ -359,6 +455,7 @@ document.addEventListener('click', function(e) {
     }
 });
 
+// --- WORKS SEARCH ---
 function onWorksSearch() {
     const q = $('worksSearch').value.trim().toLowerCase();
     const cats = document.querySelectorAll('.work-category');
@@ -384,12 +481,20 @@ function onWorksSearch() {
     });
 }
 
+// --- FLUIDS ---
 function renderFluids(mod) {
     const f = mod.fluids;
-    const rows = [['Моторное масло', f.engine_oil], ['Масло КПП', f.gearbox_oil], ['Масло раздатки', f.transfer_case],
-        ['Масло переднего редуктора', f.diff_front], ['Масло заднего редуктора', f.diff_rear],
-        ['Охлаждающая жидкость', f.coolant], ['Тормозная жидкость', f.brake_fluid],
-        ['Усилитель руля (ГУР)', f.power_steering], ['Хладагент кондиционера', f.refrigerant]];
+    const rows = [
+        ['Моторное масло', f.engine_oil],
+        ['Масло КПП', f.gearbox_oil],
+        ['Масло раздатки', f.transfer_case],
+        ['Масло переднего редуктора', f.diff_front],
+        ['Масло заднего редуктора', f.diff_rear],
+        ['Охлаждающая жидкость', f.coolant],
+        ['Тормозная жидкость', f.brake_fluid],
+        ['Усилитель руля (ГУР)', f.power_steering],
+        ['Хладагент кондиционера', f.refrigerant]
+    ];
     let html = '<tr><th>Жидкость</th><th>Объём</th><th>Допуск</th><th>Вязкость</th></tr>';
     rows.forEach(function(row) {
         if (!row[1]) html += '<tr><td class="fluid-name">' + row[0] + '</td><td class="fluid-na" colspan="3">—</td></tr>';
@@ -399,6 +504,7 @@ function renderFluids(mod) {
     if ($('fluidsPanel')) $('fluidsPanel').classList.add('active');
 }
 
+// --- WORKS LIST ---
 function renderWorks(mod) {
     const container = $('worksList');
     container.innerHTML = '';
@@ -456,8 +562,7 @@ function onWorksListClick(e) {
                 w.includes.forEach(function(incId) {
                     const inc = worksCatalog[incId];
                     if (inc) {
-                        const incPrice = workPrice(inc.nh, inc.rateType);
-                        list.insertAdjacentHTML('beforeend', '<div class="include-item"><span>' + inc.name + '</span><span>' + inc.nh + ' н/ч · ' + formatRub(incPrice) + '</span></div>');
+                        list.insertAdjacentHTML('beforeend', '<div class="include-item"><span>' + inc.name + '</span><span>' + inc.nh + ' н/ч · ' + formatRub(workPrice(inc.nh, inc.rateType)) + '</span></div>');
                     }
                 });
                 list.classList.add('expanded');
@@ -486,6 +591,7 @@ function toggleWork(workId, itemEl) {
     renderCalc();
 }
 
+// --- CALC PANEL ---
 function renderCalc() {
     const body = $('calcBody');
     if (!body) return;
@@ -527,6 +633,7 @@ function renderCalc() {
     if (totalCoeff > 0) html += '<div class="calc-total-row"><span>Коэффициенты:</span><span>+' + formatRub(totalCoeff) + '</span></div>';
     html += '<div class="calc-total-row final"><span>Итого:</span><span>' + formatRub(totalWorks) + '</span></div></div>';
     body.innerHTML = html;
+
     body.querySelectorAll('.calc-work-remove').forEach(function(btn) {
         btn.onclick = function(e) {
             e.stopPropagation();
@@ -546,8 +653,7 @@ function renderCalc() {
             if (!cType) return;
             const sw = selectedWorks[idx];
             const percent = CONFIG.coefficients[cType].percent;
-            const rub = Math.round(sw.price * percent / 100);
-            sw.coefficients.push({ type: cType, percent: percent, rub: rub });
+            sw.coefficients.push({ type: cType, percent: percent, rub: Math.round(sw.price * percent / 100) });
             renderCalc();
         };
     });
@@ -571,6 +677,7 @@ function renderCalc() {
     });
 }
 
+// --- SAVE ---
 function saveCalculation() {
     if (isSaving || selectedWorks.length === 0 || !currentMod) return;
     isSaving = true;
@@ -595,7 +702,6 @@ function saveCalculation() {
     history = history.slice(0, 5);
     localStorage.setItem('nemesia_history', JSON.stringify(history));
     localStorage.setItem('nemesia_lastCalc', JSON.stringify(record));
-    renderHistory();
     showToast('Расчёт сохранён');
 
     if (CONFIG.cloudUrl) {
@@ -606,10 +712,13 @@ function saveCalculation() {
             coeffs: selectedWorks.filter(function(sw) { return sw.coefficients.length > 0; })
                 .map(function(sw) { return sw.name + ': ' + sw.coefficients.map(function(c) { return CONFIG.coefficients[c.type].label + ' +' + c.percent + '%'; }).join(', '); }).join('; '),
             data: record
-        });
+        }).then(function() { renderHistory(); });
+    } else {
+        renderHistory();
     }
 }
 
+// --- RESTORE ---
 function showRestoreToast(data) {
     if (!$('toastText') || !$('toastButtons') || !$('toast')) return;
     $('toastText').innerHTML = 'Восстановить последний расчёт?<br><strong>' + data.carLabel + '</strong> — ' + data.worksCount + ' работ, ' + formatRub(data.total);
@@ -651,24 +760,7 @@ function restoreCalc(data) {
     showToast('Расчёт восстановлен');
 }
 
-function renderHistory() {
-    let history = [];
-    try { history = JSON.parse(localStorage.getItem('nemesia_history') || '[]'); } catch(e) {}
-    if (history.length === 0) { if ($('historySection')) $('historySection').style.display = 'none'; return; }
-    if ($('historySection')) $('historySection').style.display = 'block';
-    const list = $('historyList');
-    if (!list) return;
-    list.innerHTML = '';
-    history.forEach(function(h) {
-        const card = el('div', 'history-card');
-        card.innerHTML = '<div class="h-row"><span class="h-car">' + h.carLabel + '</span><span class="h-sum">' + formatRub(h.total) + '</span></div>' +
-            '<div class="h-date">' + new Date(h.date).toLocaleString('ru-RU') + ' · ' + h.manager + '</div>' +
-            '<div class="h-works">' + h.worksCount + ' работ</div>';
-        card.onclick = function() { restoreCalc(h); };
-        list.appendChild(card);
-    });
-}
-
+// --- CLEAR ---
 function clearAll() {
     selectedWorks = [];
     expandedCats.clear(); expandedIncludes.clear();
@@ -683,6 +775,7 @@ function clearAll() {
     showToast('Все поля очищены');
 }
 
+// --- ADD REQUEST ---
 function submitVin() {
     const vin = $('vinInput') ? $('vinInput').value.trim() : '';
     const comment = $('vinComment') ? $('vinComment').value.trim() : '';
@@ -701,7 +794,16 @@ function submitVin() {
     if (CONFIG.cloudUrl) {
         showToast('Отправляем запрос...');
         cloudSend({ action: 'addRequest', type: addType, description: description, vin: vin, comment: comment, date: item.date, manager: item.manager })
-            .then(function(ok) { showToast(ok ? 'Запрос отправлен в общую очередь' : 'Нет связи: запрос сохранён локально'); });
+            .then(function(ok) {
+                if (ok) showToast('Запрос отправлен в общую очередь');
+                else {
+                    let queue = [];
+                    try { queue = JSON.parse(localStorage.getItem('nemesia_vinQueue') || '[]'); } catch(e) {}
+                    queue.push(item);
+                    localStorage.setItem('nemesia_vinQueue', JSON.stringify(queue));
+                    showToast('Нет связи: запрос сохранён локально');
+                }
+            });
     } else {
         let queue = [];
         try { queue = JSON.parse(localStorage.getItem('nemesia_vinQueue') || '[]'); } catch(e) {}
@@ -711,6 +813,7 @@ function submitVin() {
     }
 }
 
+// --- HELPERS ---
 function fillSelect(id, labels, values) {
     const sel = $(id);
     if (!sel) return;
