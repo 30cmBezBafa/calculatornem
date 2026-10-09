@@ -1,5 +1,6 @@
 // ============================================
-// БАЗА VOLKSWAGEN (проверенная, v3)
+// БАЗА VOLKSWAGEN (проверенная, v4: ГРМ по семействам ДВС)
+// EA211 (CWVA/CZCA/CZDA) = РЕМЕНЬ | EA888 (CZPA) и V6 TDI (CASA) = ЦЕПЬ
 // ============================================
 const volkswagenDB = {
     brand: 'Volkswagen',
@@ -23,7 +24,7 @@ const volkswagenDB = {
             },
             works: [
                 'oil_change', 'air_filter', 'cabin_filter', 'fuel_filter', 'spark_plugs', 'brake_fluid_change', 'coolant_change',
-                'timing_chain', 'valve_cover_gasket', 'water_pump', 'thermostat', 'engine_mounts', 'oil_pump',
+                'timing_belt', 'valve_cover_gasket', 'water_pump', 'thermostat', 'engine_mounts', 'oil_pump',
                 'engine_remove_install', 'gearbox_remove_install', 'gearbox_oil_change', 'mechatronic', 'clutch_replacement', 'dual_mass_flywheel', 'gearbox_repair',
                 'shock_absorbers_front', 'shock_absorbers_rear', 'springs', 'control_arm_bushings', 'ball_joints', 'sway_bar_links_front', 'sway_bar_links_rear', 'wheel_bearings',
                 'brake_pads_front', 'brake_pads_rear', 'brake_pads_rear_electric_release', 'brake_discs_front', 'brake_discs_rear', 'abs_sensor',
@@ -32,7 +33,8 @@ const volkswagenDB = {
                 'exhaust_flange', 'lambda_sensors', 'muffler'
             ],
             customNh: {
-                'oil_change': 0.5, 'fuel_filter': 0.8, 'spark_plugs': 0.6, 'timing_chain': 4.5,
+                'oil_change': 0.5, 'fuel_filter': 0.8, 'spark_plugs': 0.6,
+                'timing_belt': 3.5,
                 'valve_cover_gasket': 1.5, 'water_pump': 2.5, 'thermostat': 1.5, 'oil_pump': 4.5,
                 'alternator': 2.0, 'starter': 2.0, 'steering_rack': 3.5, 'eps': 2.5, 'battery_hood': 0.4,
                 'engine_remove_install': 10.0, 'gearbox_remove_install': 6.0, 'remove_drives': 1.0,
@@ -76,7 +78,8 @@ const volkswagenDB = {
                 'exhaust_flange', 'lambda_sensors', 'dpf_clean', 'muffler'
             ],
             customNh: {
-                'oil_change': 0.5, 'fuel_filter': 0.9, 'spark_plugs': 0.8, 'timing_chain': 6.5,
+                'oil_change': 0.5, 'fuel_filter': 0.9, 'spark_plugs': 0.8,
+                'timing_chain': 6.5,
                 'valve_cover_gasket': 2.0, 'water_pump': 3.0, 'thermostat': 2.0, 'oil_pump': 5.0,
                 'alternator': 3.0, 'starter': 2.5, 'steering_rack': 4.0, 'eps': 3.0, 'battery_hood': 0.4,
                 'engine_remove_install': 14.0, 'gearbox_remove_install': 7.5, 'remove_drives': 1.5,
@@ -110,7 +113,7 @@ const volkswagenDB = {
             },
             works: [
                 'oil_change', 'air_filter', 'cabin_filter', 'fuel_filter', 'spark_plugs', 'brake_fluid_change', 'coolant_change',
-                'timing_chain', 'valve_cover_gasket', 'water_pump', 'thermostat', 'engine_mounts', 'oil_pump',
+                'timing_belt', 'valve_cover_gasket', 'water_pump', 'thermostat', 'engine_mounts', 'oil_pump',
                 'engine_remove_install', 'gearbox_remove_install', 'gearbox_oil_change', 'clutch_replacement_manual', 'gearbox_repair',
                 'shock_absorbers_front', 'shock_absorbers_rear', 'springs', 'control_arm_bushings', 'ball_joints', 'sway_bar_links_front', 'wheel_bearings',
                 'brake_pads_front', 'brake_pads_rear', 'brake_discs_front', 'brake_discs_rear', 'abs_sensor',
@@ -119,7 +122,8 @@ const volkswagenDB = {
                 'exhaust_flange', 'lambda_sensors', 'muffler'
             ],
             customNh: {
-                'oil_change': 0.4, 'fuel_filter': 0.8, 'spark_plugs': 0.4, 'timing_chain': 4.5,
+                'oil_change': 0.4, 'fuel_filter': 0.8, 'spark_plugs': 0.4,
+                'timing_belt': 3.0,
                 'valve_cover_gasket': 1.0, 'water_pump': 1.5, 'thermostat': 1.0, 'oil_pump': 3.5,
                 'alternator': 1.5, 'starter': 1.5, 'steering_rack': 2.5, 'eps': 2.0, 'battery_hood': 0.3,
                 'engine_remove_install': 8.0, 'gearbox_remove_install': 4.0, 'remove_drives': 0.8,
@@ -151,7 +155,7 @@ const volkswagenDB = {
             },
             works: [
                 'oil_change', 'air_filter', 'cabin_filter', 'fuel_filter', 'spark_plugs', 'brake_fluid_change', 'coolant_change',
-                'timing_chain', 'valve_cover_gasket', 'water_pump', 'thermostat', 'engine_mounts', 'oil_pump',
+                'timing_belt', 'valve_cover_gasket', 'water_pump', 'thermostat', 'engine_mounts', 'oil_pump',
                 'engine_remove_install', 'gearbox_remove_install', 'gearbox_oil_change', 'mechatronic', 'clutch_replacement', 'dual_mass_flywheel', 'gearbox_repair',
                 'shock_absorbers_front', 'shock_absorbers_rear', 'springs', 'control_arm_bushings', 'ball_joints', 'sway_bar_links_front', 'sway_bar_links_rear', 'wheel_bearings',
                 'brake_pads_front', 'brake_pads_rear', 'brake_pads_rear_electric_release', 'brake_discs_front', 'brake_discs_rear', 'abs_sensor',
@@ -160,7 +164,8 @@ const volkswagenDB = {
                 'exhaust_flange', 'lambda_sensors', 'muffler'
             ],
             customNh: {
-                'oil_change': 0.5, 'fuel_filter': 0.8, 'spark_plugs': 0.6, 'timing_chain': 5.0,
+                'oil_change': 0.5, 'fuel_filter': 0.8, 'spark_plugs': 0.6,
+                'timing_belt': 3.5,
                 'valve_cover_gasket': 1.8, 'water_pump': 2.5, 'thermostat': 1.5, 'oil_pump': 4.5,
                 'alternator': 2.5, 'starter': 2.0, 'steering_rack': 3.5, 'eps': 2.5, 'battery_hood': 0.4,
                 'engine_remove_install': 12.0, 'gearbox_remove_install': 7.0, 'remove_drives': 1.0,
@@ -205,7 +210,8 @@ const volkswagenDB = {
                 'exhaust_flange', 'lambda_sensors', 'dpf_clean', 'muffler'
             ],
             customNh: {
-                'oil_change': 0.7, 'fuel_filter': 1.2, 'glow_plugs': 1.5, 'timing_chain': 11.0,
+                'oil_change': 0.7, 'fuel_filter': 1.2, 'glow_plugs': 1.5,
+                'timing_chain': 11.0,
                 'valve_cover_gasket': 3.0, 'water_pump': 3.5, 'thermostat': 2.5, 'oil_pump': 6.0,
                 'alternator': 4.5, 'starter': 3.5, 'steering_rack': 5.0, 'eps': 3.5,
                 'battery_under_seat': 0.8,
