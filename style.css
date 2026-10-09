@@ -1,6 +1,5 @@
 /* ============================================
 НЕМЕЦИЯ — КАЛЬКУЛЯТОР НОРМО-ЧАСОВ
-Стиль: строгий немецкий порядок + современная читимость
 ============================================ */
 :root {
     --bg: #f4f6f9;
@@ -10,15 +9,20 @@
     --bg-selected: #e3e9f2;
     --text: #17202b;
     --text-muted: #5c6b7a;
-    --text-light: #93a1af;
-    --border: #d8dee6;
-    --border-light: #e8edf2;
+    --text-light: #8a97a5;
+    /* Границы светлой темы сделаны контрастнее */
+    --border: #b9c4d0;
+    --border-light: #d3dbe4;
+    /* ФИРМЕННЫЙ ЦВЕТ: замени на цвет логотипа Немеция.рф, когда пришлёшь hex */
     --accent: #2563eb;
     --accent-hover: #1d4ed8;
     --accent-text: #ffffff;
     --accent-soft: rgba(37, 99, 235, 0.10);
     --danger: #dc2626;
     --success: #16a34a;
+    --coeff: #b45309;
+    --coeff-bg: rgba(245, 158, 11, 0.10);
+    --coeff-border: rgba(245, 158, 11, 0.40);
     --badge-engine: #d94848;
     --badge-standard: #2f9e6e;
     --shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
@@ -34,14 +38,17 @@
     --text: #e6ebf0;
     --text-muted: #9aa8b5;
     --text-light: #6b7885;
-    --border: #38414c;
-    --border-light: #2c343e;
+    --border: #465261;
+    --border-light: #333d49;
     --accent: #4f83f7;
     --accent-hover: #6b95ff;
     --accent-text: #ffffff;
     --accent-soft: rgba(79, 131, 247, 0.16);
     --danger: #ef4444;
     --success: #34c471;
+    --coeff: #fbbf24;
+    --coeff-bg: rgba(251, 191, 36, 0.12);
+    --coeff-border: rgba(251, 191, 36, 0.40);
     --badge-engine: #e06060;
     --badge-standard: #45b583;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
@@ -83,6 +90,9 @@ button, select, input, textarea { font-family: inherit; }
     align-items: center;
     gap: 8px;
 }
+.logo-img { height: 32px; width: auto; display: none; }
+.logo-img.ok { display: inline-block; }
+.logo-img.ok + .logo-badge { display: none; }
 .logo-badge {
     width: 28px; height: 28px;
     background: linear-gradient(135deg, var(--accent), var(--accent-hover));
@@ -188,8 +198,8 @@ button, select, input, textarea { font-family: inherit; }
     gap: 16px;
 }
 
-/* ---------- CARDS / SECTIONS ---------- */
-.car-selector, .fluids-panel, .works-panel, .calc-panel {
+/* ---------- CARDS ---------- */
+.car-selector, .fluids-panel, .works-panel, .calc-panel, .history-section, .admin-card {
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: var(--radius);
@@ -200,7 +210,7 @@ button, select, input, textarea { font-family: inherit; }
 .fluids-panel { margin-bottom: 16px; display: none; }
 .fluids-panel.active { display: block; }
 .works-panel { margin-bottom: 16px; }
-.car-selector h2, .fluids-panel h2, .works-panel h2, .calc-panel h2 {
+.car-selector h2, .fluids-panel h2, .works-panel h2, .calc-panel h2, .admin-card h2 {
     font-size: 15px;
     font-weight: 700;
     margin-bottom: 14px;
@@ -219,14 +229,14 @@ button, select, input, textarea { font-family: inherit; }
     flex-shrink: 0;
 }
 
-/* ---------- SEARCH INPUTS (с иконкой лупы) ---------- */
+/* ---------- SEARCH ---------- */
 .search-input {
     width: 100%;
     padding: 9px 12px 9px 36px;
     border: 1px solid var(--border);
     border-radius: 8px;
     background-color: var(--bg-input);
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2393a1af' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cline x1='21' y1='21' x2='16.5' y2='16.5'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238a97a5' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cline x1='21' y1='21' x2='16.5' y2='16.5'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: 11px center;
     color: var(--text);
@@ -296,7 +306,7 @@ button, select, input, textarea { font-family: inherit; }
 .select-group select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 .select-group select:disabled { opacity: 0.5; cursor: default; }
 
-/* ---------- FLUIDS TABLE ---------- */
+/* ---------- FLUIDS ---------- */
 .fluids-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
 .fluids-table th {
     text-align: left;
@@ -308,12 +318,12 @@ button, select, input, textarea { font-family: inherit; }
     text-transform: uppercase;
     letter-spacing: 0.4px;
 }
-.fluids-table td { padding: 7px 8px; border-bottom: 1px solid var(--border-light); }
+.fluids-table td { padding: 7px 8px; border-bottom: 1px solid var(--border); }
 .fluids-table tr:last-child td { border-bottom: none; }
 .fluids-table .fluid-name { font-weight: 600; }
 .fluids-table .fluid-na { color: var(--text-light); font-style: italic; }
 
-/* ---------- WORKS LIST ---------- */
+/* ---------- WORKS ---------- */
 .works-search { margin-bottom: 12px; }
 .work-category { margin-bottom: 6px; }
 .work-category-header {
@@ -339,7 +349,7 @@ button, select, input, textarea { font-family: inherit; }
     color: var(--text-muted);
     font-weight: 600;
     background: var(--bg-card);
-    border: 1px solid var(--border-light);
+    border: 1px solid var(--border);
     padding: 1px 7px;
     border-radius: 10px;
 }
@@ -416,12 +426,7 @@ button, select, input, textarea { font-family: inherit; }
 }
 .work-item.has-includes .expand-btn:hover { background: var(--bg-selected); }
 .work-item.includes-expanded .expand-btn { transform: rotate(45deg); }
-.includes-list {
-    display: none;
-    padding: 4px 0 8px 50px;
-    font-size: 12px;
-    color: var(--text-muted);
-}
+.includes-list { display: none; padding: 4px 0 8px 50px; font-size: 12px; color: var(--text-muted); }
 .includes-list.expanded { display: block; }
 .includes-list .include-item {
     padding: 3px 0;
@@ -431,22 +436,17 @@ button, select, input, textarea { font-family: inherit; }
     font-variant-numeric: tabular-nums;
 }
 
-/* ---------- CALC PANEL ---------- */
-.calc-empty {
-    text-align: center;
-    padding: 36px 20px;
-    color: var(--text-muted);
-    font-size: 13px;
-}
+/* ---------- CALC ---------- */
+.calc-empty { text-align: center; padding: 36px 20px; color: var(--text-muted); font-size: 13px; }
 .calc-work-card {
-    border: 1px solid var(--border-light);
+    border: 1px solid var(--border);
     border-radius: 8px;
     padding: 10px 12px;
     margin-bottom: 8px;
     background: var(--bg);
     transition: border-color 0.15s;
 }
-.calc-work-card:hover { border-color: var(--border); }
+.calc-work-card:hover { border-color: var(--accent); }
 .calc-work-card .calc-work-header { display: flex; align-items: center; gap: 8px; }
 .calc-work-card .calc-work-name { flex: 1; font-size: 13px; font-weight: 700; }
 .calc-work-card .calc-work-remove {
@@ -472,7 +472,7 @@ button, select, input, textarea { font-family: inherit; }
 }
 .calc-work-card .calc-work-price { font-weight: 700; color: var(--text); }
 .calc-work-card.has-includes .includes-list { padding: 4px 0 4px 12px; }
-.coeff-row { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border-light); }
+.coeff-row { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border); }
 .coeff-row select {
     width: 100%;
     padding: 5px 8px;
@@ -483,39 +483,53 @@ button, select, input, textarea { font-family: inherit; }
     font-size: 12px;
     margin-bottom: 4px;
 }
-.coeff-row .coeff-display { font-size: 12px; color: var(--text-muted); }
-.coeff-row .coeff-display .coeff-rub { font-weight: 700; color: var(--text); }
+/* Коэффициенты выделены янтарным чипом */
+.coeff-row .coeff-display {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--coeff);
+    background: var(--coeff-bg);
+    border: 1px solid var(--coeff-border);
+    padding: 3px 9px;
+    border-radius: 6px;
+    margin-bottom: 4px;
+}
+.coeff-row .coeff-display .coeff-rub { font-weight: 800; color: var(--coeff); }
 .coeff-row .coeff-remove {
     font-size: 11px;
-    color: var(--text-light);
+    color: var(--coeff);
+    opacity: 0.85;
     cursor: pointer;
     text-decoration: underline;
-    margin-top: 2px;
-    display: inline-block;
+    margin-left: 4px;
 }
-.coeff-row .coeff-remove:hover { color: var(--danger); }
+.coeff-row .coeff-remove:hover { opacity: 1; color: var(--danger); }
 .calc-total { margin-top: 12px; padding-top: 12px; border-top: 2px solid var(--border); }
 .calc-total-row {
     display: flex;
     justify-content: space-between;
+    align-items: baseline;
     font-size: 13px;
     margin-bottom: 4px;
     color: var(--text-muted);
     font-variant-numeric: tabular-nums;
 }
+/* Итого — ровная плашка во всю ширину */
 .calc-total-row.final {
-    font-size: 19px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 18px;
     font-weight: 800;
     color: var(--text);
-    margin-top: 8px;
-    padding-top: 10px;
-    border-top: 1px solid var(--border);
+    margin: 10px -14px 0;
+    padding: 10px 14px;
     background: var(--accent-soft);
-    margin-left: -12px;
-    margin-right: -12px;
-    padding-left: 12px;
-    padding-right: 12px;
     border-radius: 8px;
+    font-variant-numeric: tabular-nums;
 }
 .calc-buttons { display: flex; gap: 8px; margin-top: 14px; }
 .calc-btn {
@@ -533,24 +547,12 @@ button, select, input, textarea { font-family: inherit; }
 }
 .calc-btn:hover { background: var(--bg-hover); transform: translateY(-1px); }
 .calc-btn:active { transform: translateY(0); }
-.calc-btn.primary {
-    background: var(--accent);
-    color: var(--accent-text);
-    border-color: var(--accent);
-    box-shadow: 0 2px 6px var(--accent-soft);
-}
+.calc-btn.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
 .calc-btn.primary:hover { background: var(--accent-hover); }
 .calc-btn.danger { color: var(--danger); }
 .calc-btn.danger:hover { background: rgba(220, 38, 38, 0.08); }
 
 /* ---------- HISTORY ---------- */
-.history-section {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 16px 18px;
-    box-shadow: var(--shadow);
-}
 .history-section h3 {
     font-size: 13px;
     font-weight: 700;
@@ -562,7 +564,7 @@ button, select, input, textarea { font-family: inherit; }
 .history-section h3::before { content: '🕘 '; }
 .history-card {
     background: var(--bg);
-    border: 1px solid var(--border-light);
+    border: 1px solid var(--border);
     border-left: 3px solid var(--accent);
     border-radius: 8px;
     padding: 10px 12px;
@@ -608,7 +610,7 @@ button, select, input, textarea { font-family: inherit; }
     font-size: 12px;
     font-weight: 700;
 }
-.toast .toast-btn.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+.toast .toast-btn.primary { background: var(--accent); color: var(--accent-text); }
 
 /* ---------- MODALS ---------- */
 .modal-overlay {
@@ -675,50 +677,84 @@ button, select, input, textarea { font-family: inherit; }
     transition: all 0.15s;
 }
 .modal .modal-btn:hover { background: var(--bg-hover); }
-.modal .modal-btn.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+.modal .modal-btn.primary { background: var(--accent); color: var(--accent-text); }
 .modal .modal-btn.primary:hover { background: var(--accent-hover); }
 
-/* ---------- ADMIN / QUEUE (служебные классы) ---------- */
-.admin-btn {
-    padding: 6px 12px;
-    border: 1px solid var(--border);
-    border-radius: 7px;
-    background: var(--bg-card);
-    color: var(--text);
-    cursor: pointer;
-    font-size: 12px;
-    font-weight: 700;
+/* ---------- ADMIN ---------- */
+.admin-wrap {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
 }
-.admin-btn.danger { color: var(--danger); }
-.admin-btn.danger:hover { background: rgba(220, 38, 38, 0.08); }
+.admin-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.admin-field { flex: 1; min-width: 140px; }
+.admin-field label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--text-muted);
+    margin-bottom: 5px;
+}
 .admin-input, .rate-select {
-    padding: 7px 10px;
+    width: 100%;
+    padding: 9px 10px;
     border: 1px solid var(--border);
-    border-radius: 7px;
+    border-radius: 8px;
     background: var(--bg-input);
     color: var(--text);
     font-size: 13px;
-    width: 100%;
+    outline: none;
+    transition: border 0.15s, box-shadow 0.15s;
 }
-.mod-form-row { display: flex; gap: 10px; align-items: flex-end; padding: 6px 0; border-bottom: 1px solid var(--border-light); }
-.mod-group label { font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 3px; }
+.admin-input:focus, .rate-select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.admin-btn {
+    padding: 9px 16px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-card);
+    color: var(--text);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 700;
+    transition: all 0.15s;
+}
+.admin-btn:hover { background: var(--bg-hover); }
+.admin-btn.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+.admin-btn.danger { color: var(--danger); }
+.admin-btn.danger:hover { background: rgba(220, 38, 38, 0.08); }
+.admin-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.admin-table td { padding: 8px; border-bottom: 1px solid var(--border); }
+.admin-table tr:last-child td { border-bottom: none; }
+.mod-form-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--border-light);
+    flex-wrap: wrap;
+}
+.mod-group label {
+    font-size: 11px;
+    color: var(--text-muted);
+    display: block;
+    margin-bottom: 3px;
+    font-weight: 600;
+}
 .queue-item {
     background: var(--bg);
-    border: 1px solid var(--border-light);
+    border: 1px solid var(--border);
     border-radius: 8px;
     padding: 10px 12px;
     margin-bottom: 8px;
     position: relative;
 }
 .queue-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-.queue-type-badge {
-    background: var(--accent);
-    color: #fff;
-    font-size: 11px;
-    font-weight: 700;
-    padding: 2px 8px;
-    border-radius: 5px;
-}
+.queue-type-badge { background: var(--accent); color: #fff; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 5px; }
 .queue-date { font-size: 11px; color: var(--text-muted); }
 .queue-desc, .queue-vin, .queue-comment { font-size: 12px; margin-top: 3px; }
 .queue-manager { font-size: 11px; color: var(--text-muted); margin-top: 5px; }
@@ -745,12 +781,7 @@ button, select, input, textarea { font-family: inherit; }
 /* ---------- MOBILE ---------- */
 @media (max-width: 900px) {
     .main-container { flex-direction: column; padding: 12px; gap: 12px; }
-    .right-panel {
-        width: 100%;
-        position: static;
-        max-height: none;
-        overflow-y: visible;
-    }
+    .right-panel { width: 100%; position: static; max-height: none; overflow-y: visible; }
     .header { flex-wrap: wrap; gap: 8px; padding: 8px 12px; }
     .header-logo .logo-sub { display: none; }
     .header-spacer { display: none; }
@@ -763,10 +794,10 @@ button, select, input, textarea { font-family: inherit; }
     .modal { padding: 18px; }
     .includes-list { padding-left: 30px; }
     .includes-list .include-item { max-width: 100%; }
-    .calc-total-row.final { margin-left: -12px; margin-right: -12px; }
+    .calc-total-row.final { margin: 10px -12px 0; padding: 10px 12px; }
 }
 @media (max-width: 480px) {
-    .car-selector, .fluids-panel, .works-panel, .calc-panel, .history-section { padding: 14px; }
+    .car-selector, .fluids-panel, .works-panel, .calc-panel, .history-section, .admin-card { padding: 14px; }
     .header-btn { padding: 6px 10px; font-size: 12px; }
     .calc-total-row.final { font-size: 17px; }
 }
