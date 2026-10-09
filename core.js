@@ -1,5 +1,5 @@
 // ============================================
-// НЕМЕЦИЯ — ОБЩЕЕ ЯДРО (core.js)
+// НЕМЕЦИЯ — ОБЩЕЕ ЯДРО (core.js, v2)
 // Общие функции для калькулятора и админки
 // ============================================
 
@@ -23,12 +23,19 @@ function debounce(fn, ms) {
     };
 }
 
-// Дата: если пришёл хвост "GMT+0600 (Омск...)" — форматируем заново
+// Дата из облака: если прилетел хвост "GMT+0600 (Омск...)" — форматируем заново
 function cleanDate(s) {
     const str = String(s || '');
     if (str.indexOf('GMT') === -1) return str;
     const d = new Date(str);
     if (isNaN(d.getTime())) return str;
+    return d.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
+}
+
+// Короткая дата из ISO (локальные записи, очереди)
+function fmtShort(iso) {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return String(iso || '');
     return d.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
 }
 
