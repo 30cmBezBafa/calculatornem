@@ -477,3 +477,5 @@ button, select, input, textarea { font-family: inherit; }
     .brand-tiles { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
     .brand-tile { height: 46px; }
 }
+/* Подпись марки видна ТОЛЬКО когда логотип не загрузился */
+.brand-tile .brand-tile-text { display: none; }
