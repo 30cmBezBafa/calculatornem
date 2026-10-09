@@ -1,5 +1,6 @@
 /* ============================================
 НЕМЕЦИЯ — КАЛЬКУЛЯТОР НОРМО-ЧАСОВ
+Палитра: navy + teal (по бренду Немеция.рф)
 ============================================ */
 :root {
     --bg: #f4f6f9;
@@ -10,21 +11,22 @@
     --text: #17202b;
     --text-muted: #5c6b7a;
     --text-light: #8a97a5;
-    /* Границы светлой темы сделаны контрастнее */
     --border: #b9c4d0;
     --border-light: #d3dbe4;
-    /* ФИРМЕННЫЙ ЦВЕТ: замени на цвет логотипа Немеция.рф, когда пришлёшь hex */
-    --accent: #2563eb;
-    --accent-hover: #1d4ed8;
+    /* Фирменные цвета бренда */
+    --brand-navy: #1f3350;
+    --brand-teal: #2a9d8f;
+    --accent: #2a9d8f;
+    --accent-hover: #1f7a70;
     --accent-text: #ffffff;
-    --accent-soft: rgba(37, 99, 235, 0.10);
+    --accent-soft: rgba(42, 157, 143, 0.12);
     --danger: #dc2626;
     --success: #16a34a;
     --coeff: #b45309;
     --coeff-bg: rgba(245, 158, 11, 0.10);
     --coeff-border: rgba(245, 158, 11, 0.40);
     --badge-engine: #d94848;
-    --badge-standard: #2f9e6e;
+    --badge-standard: #1f3350;
     --shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
     --shadow-lg: 0 8px 24px rgba(16, 24, 40, 0.12);
     --radius: 10px;
@@ -40,17 +42,19 @@
     --text-light: #6b7885;
     --border: #465261;
     --border-light: #333d49;
-    --accent: #4f83f7;
-    --accent-hover: #6b95ff;
-    --accent-text: #ffffff;
-    --accent-soft: rgba(79, 131, 247, 0.16);
+    --brand-navy: #223c5c;
+    --brand-teal: #3fc1b0;
+    --accent: #3fc1b0;
+    --accent-hover: #5fd6c6;
+    --accent-text: #08201c;
+    --accent-soft: rgba(63, 193, 176, 0.16);
     --danger: #ef4444;
     --success: #34c471;
     --coeff: #fbbf24;
     --coeff-bg: rgba(251, 191, 36, 0.12);
     --coeff-border: rgba(251, 191, 36, 0.40);
     --badge-engine: #e06060;
-    --badge-standard: #45b583;
+    --badge-standard: #7fa8d9;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
     --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
 }
@@ -89,13 +93,15 @@ button, select, input, textarea { font-family: inherit; }
     display: flex;
     align-items: center;
     gap: 8px;
+    color: var(--brand-navy);
 }
+[data-theme="dark"] .header-logo { color: var(--text); }
 .logo-img { height: 32px; width: auto; display: none; }
 .logo-img.ok { display: inline-block; }
 .logo-img.ok + .logo-badge { display: none; }
 .logo-badge {
     width: 28px; height: 28px;
-    background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+    background: linear-gradient(135deg, var(--brand-navy) 0%, var(--brand-teal) 100%);
     color: #fff;
     border-radius: 8px;
     display: inline-flex;
@@ -483,7 +489,6 @@ button, select, input, textarea { font-family: inherit; }
     font-size: 12px;
     margin-bottom: 4px;
 }
-/* Коэффициенты выделены янтарным чипом */
 .coeff-row .coeff-display {
     display: inline-flex;
     align-items: center;
@@ -517,7 +522,6 @@ button, select, input, textarea { font-family: inherit; }
     color: var(--text-muted);
     font-variant-numeric: tabular-nums;
 }
-/* Итого — ровная плашка во всю ширину */
 .calc-total-row.final {
     display: flex;
     justify-content: space-between;
