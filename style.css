@@ -1,6 +1,6 @@
 /* ============================================
 НЕМЕЦИЯ — КАЛЬКУЛЯТОР НОРМО-ЧАСОВ
-Стиль: строгий монохром (Bauhaus / VAG-техничность)
+Стиль: строгий монохром. Логотип — в цвете.
 ============================================ */
 :root {
     --bg: #ececec;
@@ -84,7 +84,8 @@ button, select, input, textarea { font-family: inherit; }
     align-items: center;
     gap: 9px;
 }
-.logo-img { height: 30px; width: auto; display: none; filter: grayscale(1); }
+/* ЛОГОТИП — В ЦВЕТЕ (без фильтра) */
+.logo-img { height: 32px; width: auto; display: none; }
 .logo-img.ok { display: inline-block; }
 .logo-img.ok + .logo-badge { display: none; }
 .logo-badge {
@@ -503,7 +504,6 @@ button, select, input, textarea { font-family: inherit; }
     padding: 3px 9px;
     border-radius: 2px;
     margin-bottom: 4px;
-    filter: grayscale(0.2);
 }
 .coeff-row .coeff-display .coeff-rub { font-weight: 800; color: var(--coeff); }
 .coeff-row .coeff-remove {
@@ -531,7 +531,6 @@ button, select, input, textarea { font-family: inherit; }
     font-size: 18px;
     font-weight: 800;
     letter-spacing: 0.3px;
-    color: var(--text);
     margin: 10px -14px 0;
     padding: 10px 14px;
     background: var(--accent);
