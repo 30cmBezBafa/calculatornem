@@ -19,7 +19,7 @@
             <span>🌙</span>
             <input type="checkbox" id="themeToggle">
             <span class="slider"></span>
-            <span>️</span>
+            <span>☀️</span>
         </label>
         <a href="admin.html" class="header-btn">Админка</a>
     </header>
@@ -86,6 +86,7 @@
                 </div>
                 <div class="calc-buttons">
                     <button id="saveCalcBtn" class="calc-btn primary">Сохранить расчёт</button>
+                    <button id="journalBtn" class="calc-btn">☁️ Журнал</button>
                     <button id="clearAllBtn" class="calc-btn danger">Стереть все поля</button>
                 </div>
             </div>
@@ -97,7 +98,8 @@
         </div>
     </div>
 
-    <div class="modal-overlay">
+    <!-- Модалка запроса на добавление -->
+    <div class="modal-overlay" id="addOverlay">
         <div class="modal">
             <h3>Запрос на добавление в базу</h3>
             <p>Менеджер не нашёл нужную модификацию. Заполните форму — заявка уйдёт в очередь админки.</p>
@@ -120,6 +122,18 @@
             <div class="modal-buttons">
                 <button id="vinCancel" class="modal-btn">Отмена</button>
                 <button id="vinSubmit" class="modal-btn primary">Отправить в очередь</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модалка журнала расчётов -->
+    <div class="modal-overlay" id="journalOverlay">
+        <div class="modal">
+            <h3>Журнал расчётов (из облака)</h3>
+            <input type="text" id="journalSearch" placeholder="Поиск: автомобиль или менеджер...">
+            <div id="journalList" style="max-height:50vh;overflow-y:auto;margin-top:8px;"></div>
+            <div class="modal-buttons">
+                <button id="journalClose" class="modal-btn">Закрыть</button>
             </div>
         </div>
     </div>
