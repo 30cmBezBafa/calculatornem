@@ -1,6 +1,6 @@
 // ============================================
-// НЕМЕЦИЯ — ОБЩЕЕ ЯДРО (core.js, v2)
-// Общие функции для калькулятора и админки
+// НЕМЕЦИЯ — ОБЩЕЕ ЯДРО (core.js, v3)
+// Общие функции и константы для калькулятора и админки
 // ============================================
 
 // --- DOM-хелперы ---
@@ -80,4 +80,32 @@ function ensureBrand(brandId) {
         s.onerror = function() { res(null); };
         document.head.appendChild(s);
     });
+}
+
+// --- Константы марок (единственный источник правды) ---
+// Исторические префиксы id модификаций (vw_..., mb_...)
+const BRAND_PREFIX = { volkswagen: 'vw', mercedes: 'mb' };
+
+// Иконки категорий, если config.js старый и не содержит CAT_ICONS
+const ICON_FALLBACK = {
+    to: '🛢️', diag: '🔬', engine: '⚙️', engine_big: '🏗️', gearbox: '🔄', awd: '🧭',
+    suspension: '🌀', brakes: '🛑', steering: '🛞', electrics: '⚡', climate: '❄️', exhaust: '💨'
+};
+
+// Фирменные имена полного привода, если config.js старый и не содержит AWD_NAMES
+const AWD_FALLBACK = {
+    volkswagen: '4MOTION', audi: 'QUATTRO', skoda: '4x4', seat: '4Drive',
+    porsche: 'PTM', bmw: 'xDrive', mini: 'ALL4', alpina: 'xDrive', mercedes: '4MATIC'
+};
+
+function brandIdPrefix(brandId) { return BRAND_PREFIX[brandId] || brandId; }
+
+function catIcon(key) {
+    if (typeof CAT_ICONS !== 'undefined' && CAT_ICONS[key]) return CAT_ICONS[key];
+    return ICON_FALLBACK[key] || '';
+}
+
+function awdName(brandId) {
+    const map = (typeof AWD_NAMES !== 'undefined') ? AWD_NAMES : AWD_FALLBACK;
+    return map[brandId] || 'AWD';
 }
