@@ -38,31 +38,32 @@
                     <input type="text" id="globalSearch" class="search-input" placeholder="Поиск: модель, двигатель, код КПП...">
                     <div id="searchDropdown" class="search-dropdown"></div>
                 </div>
+
+                <label class="tiles-label">Марка</label>
+                <div id="brandTiles" class="brand-tiles"></div>
+                <select id="brandSelect" style="display:none;" disabled><option value="">—</option></select>
+
                 <div class="select-row">
-                    <div class="select-group">
-                        <label>Марка</label>
-                        <select id="brandSelect" disabled><option value="">—</option></select>
-                    </div>
                     <div class="select-group">
                         <label>Модель</label>
                         <select id="modelSelect" disabled><option value="">—</option></select>
                     </div>
-                </div>
-                <div class="select-row">
                     <div class="select-group">
                         <label>Поколение</label>
                         <select id="genSelect" disabled><option value="">—</option></select>
                     </div>
+                </div>
+                <div class="select-row">
                     <div class="select-group">
                         <label>Двигатель (код / объём / л.с. / Нм)</label>
                         <select id="engineSelect" disabled><option value="">—</option></select>
                     </div>
-                </div>
-                <div class="select-row">
                     <div class="select-group">
                         <label>КПП (код / тип / передачи)</label>
                         <select id="gearboxSelect" disabled><option value="">—</option></select>
                     </div>
+                </div>
+                <div class="select-row">
                     <div class="select-group">
                         <label>Привод</label>
                         <select id="driveSelect" disabled><option value="">—</option></select>
@@ -88,7 +89,7 @@
             <div class="calc-panel">
                 <h2><span class="sec-icon">🧮</span> Расчёт</h2>
                 <div id="calcBody">
-                    <div class="calc-empty">👈 Выберите работы из списка слева</div>
+                    <div class="calc-empty">Выберите работы из списка слева</div>
                 </div>
                 <div class="calc-buttons">
                     <button id="saveCalcBtn" class="calc-btn primary">💾 Сохранить</button>
@@ -104,6 +105,7 @@
         </div>
     </div>
 
+    <!-- Модалка запроса на добавление -->
     <div class="modal-overlay" id="addOverlay">
         <div class="modal">
             <h3>➕ Запрос на добавление в базу</h3>
@@ -131,6 +133,7 @@
         </div>
     </div>
 
+    <!-- Модалка журнала -->
     <div class="modal-overlay" id="journalOverlay">
         <div class="modal">
             <h3>☁️ Журнал расчётов (общий)</h3>
