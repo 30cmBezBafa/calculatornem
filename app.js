@@ -262,8 +262,8 @@ function renderJournalList(filter) {
     list.innerHTML = items.map(function(it) {
         return '<div class="history-card" data-row="' + it.row + '">' +
             '<div class="h-row"><span class="h-car">' + (it.carLabel || '—') + '</span><span class="h-sum">' + formatRub(it.total || 0) + '</span></div>' +
-            '<div class="h-date">' + (it.date || '') + ' · ' + (it.manager || '—') + '</div>' +
-            '<div class="h-works">' + (it.worksCount || 0) + ' работ' + (it.data ? '' : ' · (старая запись, не восстанавливается)') + '</div></div>';
+            '<div class="h-date">' + (it.date || '') + '</div>' +
+            '<div class="h-foot"><span class="h-works">' + (it.worksCount || 0) + ' работ' + (it.data ? '' : ' · старая запись') + '</span><span class="h-manager">' + (it.manager || '—') + '</span></div></div>';
     }).join('');
     list.querySelectorAll('.history-card').forEach(function(card) {
         card.onclick = function() {
@@ -277,7 +277,6 @@ function renderJournalList(filter) {
     });
 }
 
-// --- HISTORY ---
 function renderHistory() {
     const section = $('historySection');
     if (!section) return;
@@ -293,10 +292,10 @@ function renderHistory() {
         list.innerHTML = historyItems.map(function(it) {
             return '<div class="history-card" data-row="' + it.row + '">' +
                 '<div class="h-row"><span class="h-car">' + (it.carLabel || '—') + '</span>' +
-                '<span style="display:flex;align-items:center;gap:6px;"><span class="h-sum">' + formatRub(it.total || 0) + '</span>' +
-                '<span class="h-del" data-row="' + it.row + '" title="Удалить из общего журнала" style="cursor:pointer;color:var(--text-light);font-size:16px;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;border-radius:3px;flex-shrink:0;">×</span></span></div>' +
-                '<div class="h-date">' + (it.date || '') + ' · ' + (it.manager || '—') + '</div>' +
-                '<div class="h-works">' + (it.worksCount || 0) + ' работ' + (it.data ? '' : ' · (без данных восстановления)') + '</div></div>';
+                '<span class="h-sumwrap"><span class="h-sum">' + formatRub(it.total || 0) + '</span>' +
+                '<span class="h-del" data-row="' + it.row + '" title="Удалить из общего журнала">×</span></span></div>' +
+                '<div class="h-date">' + (it.date || '') + '</div>' +
+                '<div class="h-foot"><span class="h-works">' + (it.worksCount || 0) + ' работ</span><span class="h-manager">' + (it.manager || '—') + '</span></div></div>';
         }).join('');
         list.querySelectorAll('.h-del').forEach(function(btn) {
             btn.onclick = function(e) {
@@ -335,11 +334,17 @@ function renderLocalHistory() {
     history.forEach(function(h) {
         const card = el('div', 'history-card');
         card.innerHTML = '<div class="h-row"><span class="h-car">' + h.carLabel + '</span><span class="h-sum">' + formatRub(h.total) + '</span></div>' +
-            '<div class="h-date">' + new Date(h.date).toLocaleString('ru-RU') + ' · ' + h.manager + '</div>' +
-            '<div class="h-works">' + h.worksCount + ' работ</div>';
+            '<div class="h-date">' + fmtShortLocal(h.date) + '</div>' +
+            '<div class="h-foot"><span class="h-works">' + h.worksCount + ' работ</span><span class="h-manager">' + h.manager + '</span></div>';
         card.onclick = function() { restoreCalc(h); };
         list.appendChild(card);
     });
+}
+
+function fmtShortLocal(iso) {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return String(iso || '');
+    return d.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
 }
 
 // --- WORK ITEM TEMPLATE ---
