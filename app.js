@@ -1,5 +1,5 @@
 // ============================================
-// НЕМЕЦИЯ — ОСНОВНАЯ ЛОГИКА (ИСПРАВЛЕННАЯ ВЕРСИЯ)
+// НЕМЕЦИЯ — ОСНОВНАЯ ЛОГИКА (с кнопками "Добавить")
 // ============================================
 
 (function() {
@@ -9,11 +9,11 @@
 let currentBrand = null;
 let currentBrandData = null;
 let currentMod = null;
-let selectedWorks = []; 
+let selectedWorks = [];
 let expandedCats = new Set();
-let expandedIncludes = new Set(); 
+let expandedIncludes = new Set();
 let isSaving = false;
-let searchActiveIndex = -1; 
+let searchActiveIndex = -1;
 let searchResults = [];
 
 // --- DOM HELPERS ---
@@ -46,12 +46,32 @@ function debounce(fn, ms) {
     };
 }
 
-// --- WORK ITEM TEMPLATE (shared) ---
-// ДОБАВЛЕНО: customNh для отображения переопределенного времени
+// Добавляет опцию "+ Добавить ..." в конец select
+function addAddOption(selectId, labelText) {
+    const sel = $(selectId);
+    if (!sel) return;
+    const opt = document.createElement('option');
+    opt.value = '__add__';
+    opt.textContent = `+ Добавить ${labelText}`;
+    opt.style.color = '#0066cc';
+    opt.style.fontWeight = 'bold';
+    sel.appendChild(opt);
+}
+
+// Открывает модалку запроса на добавление
+function openAddModal(type) {
+    if ($('addType')) $('addType').value = type;
+    if ($('vinModal')) $('vinModal').classList.add('show');
+}
+
+// --- WORK ITEM TEMPLATE ---
 function workItemHTML(workId, work, price, inCalc, customNh) {
     const rateLabel = work.rateType === 'engine' ? 'ДВС' : '';
     const badge = rateLabel ? `<span class="rate-badge ${work.rateType}">${rateLabel}</span>` : '';
     const nhLabel = customNh ? `${customNh} н/ч` : `${work.nh} н/ч`;
+    const confidenceDot = customNh 
+        ? '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#27ae60;margin-left:6px;" title="Проверено для этого автомобиля"></span>'
+        : '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#e74c3c;margin-left:6px;" title="Усредненное значение"></span>';
     const hasIncludes = work.includes && work.includes.length > 0;
     const expandBtn = hasIncludes ? `<span class="expand-btn" data-work-id="${workId}" data-context="list">+</span>` : '';
     return `
@@ -59,7 +79,7 @@ function workItemHTML(workId, work, price, inCalc, customNh) {
              data-work-id="${workId}" tabindex="0">
             <span class="checkbox"></span>
             <span class="work-name">${work.name}${badge}</span>
-            <span class="work-nh">${nhLabel}</span>
+            <span class="work-nh">${nhLabel}${confidenceDot}</span>
             <span class="work-price">${formatRub(price)}</span>
             ${expandBtn}
         </div>
@@ -86,14 +106,67 @@ function init() {
         brandSel.disabled = false;
         brandSel.innerHTML = '<option value="">— выбрать —</option>' +
             CONFIG.brands.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
-        brandSel.onchange = onBrandChange;
+        addAddOption('brandSelect', 'марку');
+        brandSel.onchange = () => {
+            if (brandSel.value === '__add__') {
+                openAddModal('Марка');
+                brandSel.value = '';
+                return;
+            }
+            onBrandChange();
+        };
     }
 
-    if ($('modelSelect')) $('modelSelect').onchange = onModelChange;
-    if ($('genSelect')) $('genSelect').onchange = onGenChange;
-    if ($('engineSelect')) $('engineSelect').onchange = onEngineChange;
-    if ($('gearboxSelect')) $('gearboxSelect').onchange = onGearboxChange;
-    if ($('driveSelect')) $('driveSelect').onchange = onDriveChange;
+    if ($('modelSelect')) {
+        $('modelSelect').onchange = () => {
+            if ($('modelSelect').value === '__add__') {
+                openAddModal('Модель');
+                $('modelSelect').value = '';
+                return;
+            }
+            onModelChange();
+        };
+    }
+    if ($('genSelect')) {
+        $('genSelect').onchange = () => {
+            if ($('genSelect').value === '__add__') {
+                openAddModal('Поколение');
+                $('genSelect').value = '';
+                return;
+            }
+            onGenChange();
+        };
+    }
+    if ($('engineSelect')) {
+        $('engineSelect').onchange = () => {
+            if ($('engineSelect').value === '__add__') {
+                openAddModal('ДВС');
+                $('engineSelect').value = '';
+                return;
+            }
+            onEngineChange();
+        };
+    }
+    if ($('gearboxSelect')) {
+        $('gearboxSelect').onchange = () => {
+            if ($('gearboxSelect').value === '__add__') {
+                openAddModal('КПП');
+                $('gearboxSelect').value = '';
+                return;
+            }
+            onGearboxChange();
+        };
+    }
+    if ($('driveSelect')) {
+        $('driveSelect').onchange = () => {
+            if ($('driveSelect').value === '__add__') {
+                openAddModal('Привод');
+                $('driveSelect').value = '';
+                return;
+            }
+            onDriveChange();
+        };
+    }
 
     if ($('globalSearch')) $('globalSearch').addEventListener('input', debounce(onSearchInput, 200));
     if ($('globalSearch')) $('globalSearch').addEventListener('keydown', onSearchKeydown);
@@ -146,7 +219,7 @@ function onBrandChange() {
     }
 
     if (!currentBrandData) {
-        showVinModal();
+        openAddModal('Марка');
         return;
     }
 
@@ -160,6 +233,7 @@ function onBrandChange() {
 
     const models = [...new Set(currentBrandData.modifications.map(m => m.model))].sort();
     fillSelect('modelSelect', models);
+    addAddOption('modelSelect', 'модель');
 }
 
 function onModelChange() {
@@ -175,6 +249,7 @@ function onModelChange() {
     const mods = currentBrandData.modifications.filter(m => m.model === model);
     const gens = [...new Set(mods.map(m => m.generation))].sort();
     fillSelect('genSelect', gens);
+    addAddOption('genSelect', 'поколение');
 }
 
 function onGenChange() {
@@ -194,6 +269,7 @@ function onGenChange() {
         mod: m
     }));
     fillSelect('engineSelect', engines.map(e => e.label), engines.map(e => e.value));
+    addAddOption('engineSelect', 'ДВС');
 }
 
 function onEngineChange() {
@@ -211,6 +287,7 @@ function onEngineChange() {
         mod: m
     }));
     fillSelect('gearboxSelect', gearboxes.map(g => g.label), gearboxes.map(g => g.value));
+    addAddOption('gearboxSelect', 'КПП');
 }
 
 function onGearboxChange() {
@@ -223,6 +300,7 @@ function onGearboxChange() {
     const mods = currentBrandData.modifications.filter(m => m.id === modId);
     const drives = [...new Set(mods.map(m => m.drive))];
     fillSelect('driveSelect', drives);
+    addAddOption('driveSelect', 'привод');
 }
 
 function onDriveChange() {
@@ -264,7 +342,7 @@ function onSearchInput() {
     }).slice(0, 15);
 
     if (searchResults.length === 0) {
-        dropdown.innerHTML = '<div class="item" style="color:var(--text-muted)">Ничего не найдено</div>';
+        dropdown.innerHTML = '<div class="item" style="color:var(--text-muted)">Ничего не найдено. <a href="#" onclick="openAddModal(\'Модификация целиком\'); return false;">Запросить добавление</a></div>';
     } else {
         dropdown.innerHTML = searchResults.map((m, i) => `
             <div class="item" data-index="${i}">
@@ -404,9 +482,16 @@ function renderWorks(mod) {
     container.innerHTML = '';
 
     const byCat = {};
+    const modGearboxType = mod.gearboxType || null;
+    
     mod.works.forEach(wid => {
         const w = worksCatalog[wid];
         if (!w) { console.warn('Unknown workId:', wid); return; }
+        
+        if (w.gearboxType && modGearboxType) {
+            if (!w.gearboxType.includes(modGearboxType)) return;
+        }
+        
         if (!byCat[w.cat]) byCat[w.cat] = [];
         byCat[w.cat].push(wid);
     });
@@ -416,7 +501,6 @@ function renderWorks(mod) {
         const catDiv = el('div', 'work-category');
         catDiv.dataset.cat = catKey;
 
-        // ИСПРАВЛЕНИЕ: объявляем body ДО использования в onclick
         const body = el('div', 'work-category-body');
         const header = el('div', 'work-category-header');
         const isExpanded = expandedCats.has(catKey);
@@ -436,7 +520,6 @@ function renderWorks(mod) {
 
         byCat[catKey].forEach(wid => {
             const w = worksCatalog[wid];
-            // ДОБАВЛЕНО: поддержка customNh
             const customNh = (mod.customNh && mod.customNh[wid]) ? mod.customNh[wid] : null;
             const finalNh = customNh || w.nh;
             const price = workPrice(finalNh, w.rateType);
@@ -498,7 +581,6 @@ function toggleWork(workId, itemEl) {
         itemEl.classList.remove('selected');
         expandedIncludes.delete(workId);
     } else {
-        // ДОБАВЛЕНО: поддержка customNh при добавлении
         const customNh = (currentMod && currentMod.customNh && currentMod.customNh[workId]) ? currentMod.customNh[workId] : null;
         const finalNh = customNh || w.nh;
         const price = workPrice(finalNh, w.rateType);
@@ -663,7 +745,7 @@ function saveCalculation() {
         total: total,
         works: selectedWorks.map(sw => ({
             workId: sw.workId,
-            nh: sw.nh, // ДОБАВЛЕНО: сохраняем фактическое время (с учетом customNh)
+            nh: sw.nh,
             coefficients: sw.coefficients.map(c => c.type)
         }))
     };
@@ -722,7 +804,6 @@ function restoreCalc(data) {
     data.works.forEach(sw => {
         const w = worksCatalog[sw.workId];
         if (!w) return;
-        // ИСПРАВЛЕНИЕ: используем сохраненное nh, если оно есть
         const nh = sw.nh !== undefined ? sw.nh : w.nh;
         const price = workPrice(nh, w.rateType);
         const coefficients = (sw.coefficients || []).map(cType => {
@@ -793,30 +874,68 @@ function clearAll() {
     showToast('Все поля очищены');
 }
 
-// --- VIN MODAL ---
-function showVinModal() {
-    if ($('vinInput')) $('vinInput').value = '';
-    if ($('vinComment')) $('vinComment').value = '';
-    if ($('vinModal')) $('vinModal').classList.add('active');
-}
-
+// --- VIN / ADD MODAL ---
 function submitVin() {
     const vin = $('vinInput')?.value.trim();
     const comment = $('vinComment')?.value.trim();
-    if (!vin) { showToast('Введите VIN'); return; }
-
+    const addType = $('addType')?.value || 'Модификация целиком';
+    const description = $('addDescription')?.value.trim();
+    
+    if (!description && !vin) { 
+        showToast('Опишите запрос или введите VIN'); 
+        return; 
+    }
+    
     let queue = [];
     try { queue = JSON.parse(localStorage.getItem('nemesia_vinQueue') || '[]'); } catch(e) {}
     queue.push({
+        type: addType,
+        description: description,
         vin: vin,
         comment: comment,
         date: new Date().toISOString(),
         manager: CONFIG.managers.find(m => m.id === $('managerSelect')?.value)?.name || '—'
     });
     localStorage.setItem('nemesia_vinQueue', JSON.stringify(queue));
+    
+    if ($('vinModal')) $('vinModal').classList.remove('show');
+    if ($('vinInput')) $('vinInput').value = '';
+    if ($('vinComment')) $('vinComment').value = '';
+    if ($('addDescription')) $('addDescription').value = '';
+    showToast('Запрос добавлен в очередь');
+    renderVinQueue();
+}
 
-    if ($('vinModal')) $('vinModal').classList.remove('active');
-    showToast('VIN добавлен в очередь');
+function renderVinQueue() {
+    const container = $('vinQueueList');
+    if (!container) return;
+    let queue = [];
+    try { queue = JSON.parse(localStorage.getItem('nemesia_vinQueue') || '[]'); } catch(e) {}
+
+    if (queue.length === 0) {
+        container.innerHTML = '<div class="queue-empty">Очередь пуста</div>';
+        return;
+    }
+
+    container.innerHTML = queue.map((item, i) => `
+        <div class="queue-item">
+            <div class="queue-type"><strong>${item.type || 'Запрос'}</strong></div>
+            ${item.description ? `<div class="queue-desc">${item.description}</div>` : ''}
+            ${item.vin ? `<div class="queue-vin">VIN: ${item.vin}</div>` : ''}
+            ${item.comment ? `<div class="queue-comment">${item.comment}</div>` : ''}
+            <div class="queue-manager">${item.manager} · ${new Date(item.date).toLocaleString('ru-RU', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'})}</div>
+            <button class="queue-remove" data-index="${i}">×</button>
+        </div>
+    `).join('');
+
+    container.querySelectorAll('.queue-remove').forEach(btn => {
+        btn.onclick = () => {
+            const idx = parseInt(btn.dataset.index);
+            queue.splice(idx, 1);
+            localStorage.setItem('nemesia_vinQueue', JSON.stringify(queue));
+            renderVinQueue();
+        };
+    });
 }
 
 // --- HELPERS ---
