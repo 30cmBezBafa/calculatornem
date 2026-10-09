@@ -476,3 +476,52 @@ button, select, input, textarea { font-family: inherit; }
 }
 /* Подпись марки видна ТОЛЬКО когда логотип не загрузился */
 .brand-tile .brand-tile-text { display: none; }
+/* ============================================
+АДМИНКА v2 — РОВНАЯ СЕТКА + МОБИЛЬНЫЕ
+============================================ */
+.admin-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 10px;
+    align-items: end;
+}
+.admin-row > .admin-btn { justify-self: start; }
+.admin-field { min-width: 0; }
+.admin-field label { margin-bottom: 5px; word-break: break-word; }
+.admin-btn { white-space: normal; line-height: 1.2; }
+.mod-form-row {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(110px, 1fr) minmax(110px, 1fr);
+    gap: 10px;
+    align-items: end;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-light);
+    flex-wrap: nowrap;
+}
+.mod-group { min-width: 0; }
+.mod-group label { word-break: break-word; }
+.admin-table td { word-break: break-word; }
+.passport-preview { word-break: break-word; }
+.queue-item { padding-right: 34px; }
+.admin-card h2 { flex-wrap: wrap; }
+
+/* Планшет */
+@media (max-width: 900px) {
+    .admin-wrap { padding: 10px; gap: 12px; }
+    .admin-card { padding: 14px; }
+    .mod-form-row { grid-template-columns: 1fr 1fr; }
+    .mod-form-row .mod-group:first-child { grid-column: 1 / -1; }
+    .login-box { padding: 22px; }
+    #whoAmI { display: none; }
+}
+/* Узкий телефон */
+@media (max-width: 560px) {
+    .admin-row { grid-template-columns: 1fr 1fr; }
+    .mod-form-row { grid-template-columns: 1fr; }
+    .mod-form-row .mod-group:first-child { grid-column: auto; }
+}
+/* Совсем узко */
+@media (max-width: 400px) {
+    .admin-row { grid-template-columns: 1fr; }
+    .admin-row > .admin-btn { justify-self: stretch; width: 100%; }
+}
