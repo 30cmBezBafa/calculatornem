@@ -44,22 +44,41 @@
         </div>
 
         <div class="admin-card">
-            <h2><span class="sec-icon">📐</span> Коэффициенты (%)</h2>
+            <h2><span class="sec-icon">📐</span> Коэффициенты</h2>
             <div class="admin-row">
                 <div class="admin-field">
-                    <label>Прикипевшие / ржавые болты</label>
+                    <label>Прикипевшие / ржавые болты (%)</label>
                     <input type="number" id="coeffRusty" class="admin-input" placeholder="15">
                 </div>
                 <div class="admin-field">
-                    <label>Алюминиевые детали</label>
+                    <label>Алюминиевые детали (%)</label>
                     <input type="number" id="coeffAluminum" class="admin-input" placeholder="20">
                 </div>
                 <div class="admin-field">
-                    <label>Установлено ГБО</label>
+                    <label>Установлено ГБО (%)</label>
                     <input type="number" id="coeffLpg" class="admin-input" placeholder="10">
                 </div>
                 <div class="admin-field" style="flex:0 0 auto;display:flex;align-items:flex-end;">
-                    <button id="saveCoeffsBtn" class="admin-btn primary">💾 Сохранить</button>
+                    <button id="saveCoeffsBtn" class="admin-btn primary">💾 Сохранить %</button>
+                </div>
+            </div>
+            <div class="admin-row" style="margin-top:14px;">
+                <div class="admin-field">
+                    <label>Существующие коэффициенты</label>
+                    <div id="coeffList"></div>
+                </div>
+            </div>
+            <div class="admin-row" style="margin-top:12px;">
+                <div class="admin-field">
+                    <label>Название нового коэффициента</label>
+                    <input type="text" id="coeffNewLabel" class="admin-input" placeholder="Например: Срочный заказ">
+                </div>
+                <div class="admin-field" style="max-width:120px;">
+                    <label>Процент</label>
+                    <input type="number" id="coeffNewPercent" class="admin-input" placeholder="10">
+                </div>
+                <div class="admin-field" style="flex:0 0 auto;display:flex;align-items:flex-end;">
+                    <button id="addCoeffBtn" class="admin-btn primary">➕ Добавить коэффициент</button>
                 </div>
             </div>
         </div>
@@ -82,7 +101,7 @@
             <h2><span class="sec-icon">📨</span> Очередь заявок на добавление</h2>
             <div id="vinQueueList"></div>
             <div class="admin-row" style="margin-top:10px;">
-                <button id="exportVinBtn" class="admin-btn">️ Экспорт очереди (JSON)</button>
+                <button id="exportVinBtn" class="admin-btn">⬇️ Экспорт очереди (JSON)</button>
             </div>
         </div>
 
