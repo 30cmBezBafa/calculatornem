@@ -224,6 +224,8 @@ button, select, input, textarea { font-family: inherit; }
 }
 .select-group select:focus { border-color: var(--accent); }
 .select-group select:disabled { opacity: 0.45; cursor: default; }
+/* МАРКИ И МОДЕЛИ — КАПСОМ */
+#brandSelect, #brandSelect option,
 #modelSelect, #modelSelect option { text-transform: uppercase; }
 
 /* FLUIDS */
