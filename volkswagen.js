@@ -1,5 +1,5 @@
 // ============================================
-// БАЗА VOLKSWAGEN (v5: расширенный каталог работ)
+// БАЗА VOLKSWAGEN (v6: схема паспорта, без массива works)
 // ============================================
 const volkswagenDB = {
     brand: 'Volkswagen',
@@ -10,8 +10,8 @@ const volkswagenDB = {
             generation: 'VII (2012–2020)',
             engine: { code: 'CZCA', volume: '1.4 L', power: '122 л.с.', torque: '200 Нм' },
             gearbox: { code: 'DQ200', type: 'DSG (робот)', gears: 7 },
-            gearboxType: 'dsg',
             drive: 'Передний',
+            suspension: 'spring', rear: 'multilink', parking: 'epb', battery: 'hood', pf: false,
             fluids: {
                 engine_oil: { volume: '4.0 л', spec: 'VW 502.00 / 504.00', viscosity: '5W-30' },
                 gearbox_oil: { volume: '1.7 л', spec: 'VW G 052 512', viscosity: '-' },
@@ -21,24 +21,6 @@ const volkswagenDB = {
                 power_steering: { volume: 'ЭУР — не обслуживается', spec: '-', viscosity: '-' },
                 refrigerant: { volume: '525 г', spec: 'R134a', viscosity: '-' }
             },
-            works: [
-                'oil_change', 'air_filter', 'cabin_filter', 'fuel_filter', 'spark_plugs', 'brake_fluid_change', 'coolant_change',
-                'diag_engine',
-                'timing_belt', 'valve_cover_gasket', 'water_pump', 'thermostat', 'engine_mounts', 'oil_pump',
-                'turbo_replacement', 'turbo_actuator', 'intake_manifold', 'intake_clean_carbon',
-                'injectors_petrol', 'hp_fuel_pump', 'lp_fuel_pump', 'belt_accessory', 'vacuum_pump',
-                'oil_pan', 'oil_separator', 'crank_seal_rear',
-                'engine_remove_install', 'gearbox_remove_install', 'gearbox_oil_change', 'mechatronic', 'clutch_replacement', 'dual_mass_flywheel', 'gearbox_repair', 'dsg_adaptation',
-                'driveshaft_front_left', 'driveshaft_front_right', 'driveshaft_boot_front_left', 'driveshaft_boot_front_right',
-                'shock_absorbers_front', 'shock_absorbers_rear', 'springs', 'control_arm_bushings', 'ball_joints', 'sway_bar_links_front', 'sway_bar_links_rear', 'wheel_bearings',
-                'subframe_front', 'stabilizer_front', 'stabilizer_rear', 'wheel_alignment',
-                'brake_pads_front', 'brake_pads_rear', 'brake_pads_rear_electric_release', 'brake_discs_front', 'brake_discs_rear', 'abs_sensor', 'brake_booster',
-                'tie_rods', 'steering_rack', 'eps',
-                'battery_hood', 'battery_adaptation', 'alternator', 'starter', 'ignition_coils',
-                'window_regulator_front_left', 'window_regulator_front_right', 'window_regulator_rear_left', 'window_regulator_rear_right',
-                'ac_compressor', 'ac_condenser', 'radiator_main',
-                'exhaust_flange', 'lambda_sensors', 'muffler'
-            ],
             customNh: {
                 'oil_change': 0.5, 'fuel_filter': 0.8, 'spark_plugs': 0.6, 'timing_belt': 3.5,
                 'valve_cover_gasket': 1.5, 'water_pump': 2.5, 'thermostat': 1.5, 'oil_pump': 4.5,
@@ -69,8 +51,8 @@ const volkswagenDB = {
             generation: 'II (2016–2024)',
             engine: { code: 'CZPA', volume: '2.0 L', power: '180 л.с.', torque: '320 Нм' },
             gearbox: { code: 'DQ500', type: 'DSG (робот)', gears: 7 },
-            gearboxType: 'dsg',
-            drive: 'Полный (4Motion)',
+            drive: 'Полный (4Motion)', awdSys: 'haldex',
+            suspension: 'spring', rear: 'multilink', parking: 'epb', battery: 'hood', pf: true,
             fluids: {
                 engine_oil: { volume: '5.7 л', spec: 'VW 508.00', viscosity: '0W-20' },
                 gearbox_oil: { volume: '2.0 л', spec: 'VW G 052 529', viscosity: '-' },
@@ -81,26 +63,6 @@ const volkswagenDB = {
                 power_steering: { volume: 'ЭУР — не обслуживается', spec: '-', viscosity: '-' },
                 refrigerant: { volume: '550 г', spec: 'R134a', viscosity: '-' }
             },
-            works: [
-                'oil_change', 'air_filter', 'cabin_filter', 'fuel_filter', 'spark_plugs', 'brake_fluid_change', 'coolant_change',
-                'diag_engine',
-                'timing_chain', 'valve_cover_gasket', 'water_pump', 'thermostat', 'engine_mounts', 'oil_pump',
-                'turbo_replacement', 'turbo_actuator', 'intake_manifold', 'intake_clean_carbon',
-                'injectors_petrol', 'hp_fuel_pump', 'lp_fuel_pump', 'belt_accessory', 'vacuum_pump',
-                'oil_pan', 'oil_separator', 'crank_seal_rear',
-                'engine_remove_install', 'gearbox_remove_install', 'gearbox_oil_change', 'mechatronic', 'clutch_replacement', 'dual_mass_flywheel', 'gearbox_repair', 'dsg_adaptation',
-                'driveshaft_front_left', 'driveshaft_front_right', 'driveshaft_rear_left', 'driveshaft_rear_right',
-                'driveshaft_boot_front_left', 'driveshaft_boot_front_right', 'driveshaft_boot_rear_left', 'driveshaft_boot_rear_right',
-                'haldex_oil', 'haldex_filter', 'diff_oil_rear', 'propshaft',
-                'shock_absorbers_front', 'shock_absorbers_rear', 'springs', 'control_arm_bushings', 'ball_joints', 'sway_bar_links_front', 'sway_bar_links_rear', 'wheel_bearings',
-                'subframe_front', 'stabilizer_front', 'stabilizer_rear', 'wheel_alignment',
-                'brake_pads_front', 'brake_pads_rear', 'brake_pads_rear_electric_release', 'brake_discs_front', 'brake_discs_rear', 'abs_sensor', 'brake_booster',
-                'tie_rods', 'steering_rack', 'eps',
-                'battery_hood', 'battery_adaptation', 'alternator', 'starter', 'ignition_coils',
-                'window_regulator_front_left', 'window_regulator_front_right', 'window_regulator_rear_left', 'window_regulator_rear_right',
-                'ac_compressor', 'ac_condenser', 'radiator_main',
-                'exhaust_flange', 'lambda_sensors', 'dpf_clean', 'dpf_replace', 'muffler'
-            ],
             customNh: {
                 'oil_change': 0.5, 'fuel_filter': 0.9, 'spark_plugs': 0.8, 'timing_chain': 6.5,
                 'valve_cover_gasket': 2.0, 'water_pump': 3.0, 'thermostat': 2.0, 'oil_pump': 5.0,
@@ -134,8 +96,8 @@ const volkswagenDB = {
             generation: 'IV (2010–2020)',
             engine: { code: 'CWVA', volume: '1.6 L', power: '110 л.с.', torque: '155 Нм' },
             gearbox: { code: '02T', type: 'МКПП', gears: 5 },
-            gearboxType: 'manual',
             drive: 'Передний',
+            suspension: 'spring', rear: 'beam', parking: 'mech', battery: 'hood', pf: false,
             fluids: {
                 engine_oil: { volume: '3.6 л', spec: 'VW 502.00', viscosity: '5W-40' },
                 gearbox_oil: { volume: '2.0 л', spec: 'VW G 052 512', viscosity: '-' },
@@ -145,23 +107,6 @@ const volkswagenDB = {
                 power_steering: { volume: 'ЭУР — не обслуживается', spec: '-', viscosity: '-' },
                 refrigerant: { volume: '450 г', spec: 'R134a', viscosity: '-' }
             },
-            works: [
-                'oil_change', 'air_filter', 'cabin_filter', 'fuel_filter', 'spark_plugs', 'brake_fluid_change', 'coolant_change',
-                'diag_engine',
-                'timing_belt', 'valve_cover_gasket', 'water_pump', 'thermostat', 'engine_mounts', 'oil_pump',
-                'intake_manifold', 'injectors_petrol', 'lp_fuel_pump', 'belt_accessory',
-                'oil_pan', 'oil_separator', 'crank_seal_rear',
-                'engine_remove_install', 'gearbox_remove_install', 'gearbox_oil_change', 'clutch_replacement_manual', 'gearbox_repair',
-                'driveshaft_front_left', 'driveshaft_front_right', 'driveshaft_boot_front_left', 'driveshaft_boot_front_right',
-                'shock_absorbers_front', 'shock_absorbers_rear', 'springs', 'control_arm_bushings', 'ball_joints', 'sway_bar_links_front', 'wheel_bearings',
-                'subframe_front', 'stabilizer_front', 'wheel_alignment',
-                'brake_pads_front', 'brake_pads_rear', 'brake_discs_front', 'brake_discs_rear', 'abs_sensor', 'brake_booster', 'handbrake_cables',
-                'tie_rods', 'steering_rack', 'eps',
-                'battery_hood', 'battery_adaptation', 'alternator', 'starter', 'ignition_coils',
-                'window_regulator_front_left', 'window_regulator_front_right', 'window_regulator_rear_left', 'window_regulator_rear_right',
-                'ac_compressor', 'ac_condenser', 'radiator_main',
-                'exhaust_flange', 'lambda_sensors', 'muffler'
-            ],
             customNh: {
                 'oil_change': 0.4, 'fuel_filter': 0.8, 'spark_plugs': 0.4, 'timing_belt': 3.0,
                 'valve_cover_gasket': 1.0, 'water_pump': 1.5, 'thermostat': 1.0, 'oil_pump': 3.5,
@@ -190,8 +135,8 @@ const volkswagenDB = {
             generation: 'B8 (2014–2023)',
             engine: { code: 'CZDA', volume: '1.4 L', power: '150 л.с.', torque: '250 Нм' },
             gearbox: { code: 'DQ250', type: 'DSG (робот)', gears: 6 },
-            gearboxType: 'dsg',
             drive: 'Передний',
+            suspension: 'spring', rear: 'multilink', parking: 'epb', battery: 'hood', pf: false,
             fluids: {
                 engine_oil: { volume: '4.5 л', spec: 'VW 502.00 / 504.00', viscosity: '5W-30' },
                 gearbox_oil: { volume: '1.7 л', spec: 'VW G 052 182', viscosity: '-' },
@@ -201,24 +146,6 @@ const volkswagenDB = {
                 power_steering: { volume: 'ЭУР — не обслуживается', spec: '-', viscosity: '-' },
                 refrigerant: { volume: '525 г', spec: 'R134a', viscosity: '-' }
             },
-            works: [
-                'oil_change', 'air_filter', 'cabin_filter', 'fuel_filter', 'spark_plugs', 'brake_fluid_change', 'coolant_change',
-                'diag_engine',
-                'timing_belt', 'valve_cover_gasket', 'water_pump', 'thermostat', 'engine_mounts', 'oil_pump',
-                'turbo_replacement', 'turbo_actuator', 'intake_manifold', 'intake_clean_carbon',
-                'injectors_petrol', 'hp_fuel_pump', 'lp_fuel_pump', 'belt_accessory', 'vacuum_pump',
-                'oil_pan', 'oil_separator', 'crank_seal_rear',
-                'engine_remove_install', 'gearbox_remove_install', 'gearbox_oil_change', 'mechatronic', 'clutch_replacement', 'dual_mass_flywheel', 'gearbox_repair', 'dsg_adaptation',
-                'driveshaft_front_left', 'driveshaft_front_right', 'driveshaft_boot_front_left', 'driveshaft_boot_front_right',
-                'shock_absorbers_front', 'shock_absorbers_rear', 'springs', 'control_arm_bushings', 'ball_joints', 'sway_bar_links_front', 'sway_bar_links_rear', 'wheel_bearings',
-                'subframe_front', 'stabilizer_front', 'stabilizer_rear', 'wheel_alignment',
-                'brake_pads_front', 'brake_pads_rear', 'brake_pads_rear_electric_release', 'brake_discs_front', 'brake_discs_rear', 'abs_sensor', 'brake_booster',
-                'tie_rods', 'steering_rack', 'eps',
-                'battery_hood', 'battery_adaptation', 'alternator', 'starter', 'ignition_coils',
-                'window_regulator_front_left', 'window_regulator_front_right', 'window_regulator_rear_left', 'window_regulator_rear_right',
-                'ac_compressor', 'ac_condenser', 'radiator_main',
-                'exhaust_flange', 'lambda_sensors', 'muffler'
-            ],
             customNh: {
                 'oil_change': 0.5, 'fuel_filter': 0.8, 'spark_plugs': 0.6, 'timing_belt': 3.5,
                 'valve_cover_gasket': 1.8, 'water_pump': 2.5, 'thermostat': 1.5, 'oil_pump': 4.5,
@@ -249,8 +176,8 @@ const volkswagenDB = {
             generation: 'CR (2010–2018)',
             engine: { code: 'CASA', volume: '3.0 L', power: '240 л.с.', torque: '550 Нм' },
             gearbox: { code: '09D', type: 'АКПП (гидротрансформатор ZF)', gears: 8 },
-            gearboxType: 'automatic',
-            drive: 'Полный (4Motion Torsen)',
+            drive: 'Полный (4Motion Torsen)', awdSys: 'torsen',
+            suspension: 'air', rear: 'multilink', parking: 'epb', battery: 'seat', pf: true,
             fluids: {
                 engine_oil: { volume: '8.3 л', spec: 'VW 507.00', viscosity: '5W-30' },
                 gearbox_oil: { volume: '9.5 л', spec: 'VW G 055 025', viscosity: '-' },
@@ -262,26 +189,6 @@ const volkswagenDB = {
                 power_steering: { volume: 'ЭУР — не обслуживается', spec: '-', viscosity: '-' },
                 refrigerant: { volume: '650 г', spec: 'R134a', viscosity: '-' }
             },
-            works: [
-                'oil_change', 'air_filter', 'cabin_filter', 'fuel_filter', 'glow_plugs', 'brake_fluid_change', 'coolant_change',
-                'diag_engine',
-                'timing_chain', 'valve_cover_gasket', 'water_pump', 'thermostat', 'engine_mounts', 'oil_pump',
-                'turbo_replacement', 'turbo_actuator', 'intake_manifold', 'intake_clean_carbon', 'egr_valve',
-                'injectors_diesel', 'hp_fuel_pump', 'lp_fuel_pump', 'belt_accessory', 'vacuum_pump',
-                'oil_pan', 'oil_separator', 'crank_seal_rear',
-                'engine_remove_install', 'gearbox_remove_install', 'gearbox_oil_change', 'gearbox_repair',
-                'driveshaft_front_left', 'driveshaft_front_right', 'driveshaft_rear_left', 'driveshaft_rear_right',
-                'driveshaft_boot_front_left', 'driveshaft_boot_front_right', 'driveshaft_boot_rear_left', 'driveshaft_boot_rear_right',
-                'transfer_case_oil', 'diff_oil_front', 'diff_oil_rear', 'transfer_case_remove', 'propshaft',
-                'shock_absorbers_front_air', 'shock_absorbers_rear_air', 'springs', 'control_arm_bushings', 'ball_joints', 'sway_bar_links_front', 'sway_bar_links_rear', 'wheel_bearings',
-                'subframe_front', 'stabilizer_front', 'stabilizer_rear', 'air_compressor', 'air_valve_block', 'wheel_alignment',
-                'brake_pads_front', 'brake_pads_rear', 'brake_pads_rear_electric_release', 'brake_discs_front', 'brake_discs_rear', 'abs_sensor', 'brake_booster',
-                'tie_rods', 'steering_rack', 'eps',
-                'battery_under_seat', 'battery_adaptation', 'alternator', 'starter',
-                'window_regulator_front_left', 'window_regulator_front_right', 'window_regulator_rear_left', 'window_regulator_rear_right',
-                'ac_compressor', 'ac_condenser', 'radiator_main',
-                'exhaust_flange', 'lambda_sensors', 'dpf_clean', 'dpf_replace', 'muffler'
-            ],
             customNh: {
                 'oil_change': 0.7, 'fuel_filter': 1.2, 'glow_plugs': 1.5, 'timing_chain': 11.0,
                 'valve_cover_gasket': 3.0, 'water_pump': 3.5, 'thermostat': 2.5, 'oil_pump': 6.0,
