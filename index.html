@@ -7,8 +7,8 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="header">
-        <div class="header-logo">НЕМЕЦИЯ <span> калькулятор нормо-часов</span></div>
+    <header class="header">
+        <div class="header-logo">НЕМЕЦИЯ <span>калькулятор нормо-часов</span></div>
         <div class="header-spacer"></div>
         <div class="manager-block">
             <span class="icon">👤</span>
@@ -19,135 +19,115 @@
             <span>🌙</span>
             <input type="checkbox" id="themeToggle">
             <span class="slider"></span>
-            <span>☀️</span>
+            <span>️</span>
         </label>
         <a href="admin.html" class="header-btn">Админка</a>
-    </div>
+    </header>
 
     <div class="main-container">
         <div class="left-panel">
-            <!-- CAR SELECTOR -->
             <div class="car-selector">
                 <h2>Выбор автомобиля</h2>
                 <div class="car-search-wrapper">
-                    <input type="text" id="globalSearch" placeholder="Поиск: модель, код ДВС, код КПП..." autocomplete="off">
-                    <div class="search-dropdown" id="searchDropdown"></div>
+                    <input type="text" id="globalSearch" placeholder="Поиск по марке, модели, двигателю...">
+                    <div id="searchDropdown" class="search-dropdown"></div>
                 </div>
                 <div class="select-row">
                     <div class="select-group">
                         <label>Марка</label>
-                        <select id="brandSelect" disabled><option>—</option></select>
+                        <select id="brandSelect" disabled><option value="">—</option></select>
                     </div>
                     <div class="select-group">
                         <label>Модель</label>
-                        <select id="modelSelect" disabled><option>—</option></select>
+                        <select id="modelSelect" disabled><option value="">—</option></select>
                     </div>
                 </div>
                 <div class="select-row">
                     <div class="select-group">
                         <label>Поколение</label>
-                        <select id="genSelect" disabled><option>—</option></select>
+                        <select id="genSelect" disabled><option value="">—</option></select>
                     </div>
-                </div>
-                <div class="select-row">
                     <div class="select-group">
                         <label>Двигатель (код / объём / л.с. / Нм)</label>
-                        <select id="engineSelect" disabled><option>—</option></select>
+                        <select id="engineSelect" disabled><option value="">—</option></select>
                     </div>
                 </div>
                 <div class="select-row">
                     <div class="select-group">
                         <label>КПП (код / тип / передачи)</label>
-                        <select id="gearboxSelect" disabled><option>—</option></select>
+                        <select id="gearboxSelect" disabled><option value="">—</option></select>
                     </div>
                     <div class="select-group">
                         <label>Привод</label>
-                        <select id="driveSelect" disabled><option>—</option></select>
+                        <select id="driveSelect" disabled><option value="">—</option></select>
                     </div>
                 </div>
             </div>
 
-            <!-- FLUIDS -->
-            <div class="fluids-panel" id="fluidsPanel">
+            <div id="fluidsPanel" class="fluids-panel">
                 <h2>Заправочные объёмы и допуски</h2>
-                <table class="fluids-table" id="fluidsTable"></table>
+                <table class="fluids-table">
+                    <tbody id="fluidsTable"></tbody>
+                </table>
             </div>
 
-            <!-- WORKS -->
-            <div class="works-panel" id="worksPanel" style="display:none">
+            <div id="worksPanel" class="works-panel" style="display:none;">
                 <h2>Работы</h2>
-                <input type="text" class="works-search" id="worksSearch" placeholder="Быстрый поиск работ..." autocomplete="off">
+                <input type="text" id="worksSearch" class="works-search" placeholder="Поиск работ...">
                 <div id="worksList"></div>
             </div>
         </div>
 
-        <!-- RIGHT PANEL -->
         <div class="right-panel">
-            <div class="calc-panel" id="calcPanel">
+            <div class="calc-panel">
                 <h2>Расчёт</h2>
                 <div id="calcBody">
                     <div class="calc-empty">Выберите работы из списка слева</div>
                 </div>
                 <div class="calc-buttons">
-                    <button class="calc-btn primary" id="saveCalcBtn">Сохранить расчёт</button>
-                    <button class="calc-btn danger" id="clearAllBtn">Стереть все поля</button>
+                    <button id="saveCalcBtn" class="calc-btn primary">Сохранить расчёт</button>
+                    <button id="clearAllBtn" class="calc-btn danger">Стереть все поля</button>
                 </div>
             </div>
 
-            <!-- HISTORY -->
-            <div class="history-section" id="historySection" style="display:none">
+            <div id="historySection" class="history-section" style="display:none;">
                 <h3>История (последние 5)</h3>
                 <div id="historyList"></div>
             </div>
         </div>
     </div>
 
-    <!-- TOAST -->
-    <div class="toast" id="toast">
-        <div class="toast-text" id="toastText"></div>
-        <div class="toast-buttons" id="toastButtons"></div>
+    <div class="modal-overlay">
+        <div class="modal">
+            <h3>Запрос на добавление в базу</h3>
+            <p>Менеджер не нашёл нужную модификацию. Заполните форму — заявка уйдёт в очередь админки.</p>
+            <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:4px;">Что нужно добавить:</label>
+            <select id="addType">
+                <option value="Марка">Марку</option>
+                <option value="Модель">Модель</option>
+                <option value="Поколение">Поколение</option>
+                <option value="ДВС">Двигатель (ДВС)</option>
+                <option value="КПП">Коробку передач (КПП)</option>
+                <option value="Привод">Привод</option>
+                <option value="Модификация целиком">Модификацию целиком</option>
+            </select>
+            <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:4px;">Описание (что именно нужно добавить):</label>
+            <textarea id="addDescription" placeholder="Например: Audi A6 C8 3.0 TDI quattro, S-tronic DL382"></textarea>
+            <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:4px;">VIN автомобиля (если есть):</label>
+            <input type="text" id="vinInput" placeholder="WVWZZZ...">
+            <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:4px;">Комментарий (необязательно):</label>
+            <input type="text" id="vinComment" placeholder="Дополнительная информация">
+            <div class="modal-buttons">
+                <button id="vinCancel" class="modal-btn">Отмена</button>
+                <button id="vinSubmit" class="modal-btn primary">Отправить в очередь</button>
+            </div>
+        </div>
     </div>
 
-    <!-- VIN MODAL -->
-    <!-- Модальное окно запроса на добавление -->
-<div id="vinModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3>Запрос на добавление в базу</h3>
-            <button class="modal-close" onclick="document.getElementById('vinModal').classList.remove('show')">×</button>
-        </div>
-        <div class="modal-body">
-            <div class="modal-field">
-                <label>Что нужно добавить:</label>
-                <select id="addType">
-                    <option value="Марка">Марку</option>
-                    <option value="Модель">Модель</option>
-                    <option value="Поколение">Поколение</option>
-                    <option value="ДВС">Двигатель (ДВС)</option>
-                    <option value="КПП">Коробку передач (КПП)</option>
-                    <option value="Привод">Привод</option>
-                    <option value="Модификация целиком">Модификацию целиком</option>
-                </select>
-            </div>
-            <div class="modal-field">
-                <label>Описание (что именно нужно добавить):</label>
-                <textarea id="addDescription" rows="3" placeholder="Например: Audi A6 C8 3.0 TDI quattro, S-tronic DL382"></textarea>
-            </div>
-            <div class="modal-field">
-                <label>VIN автомобиля (если есть):</label>
-                <input type="text" id="vinInput" placeholder="WVWZZZ...">
-            </div>
-            <div class="modal-field">
-                <label>Комментарий (необязательно):</label>
-                <input type="text" id="vinComment" placeholder="Дополнительная информация">
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button id="vinCancel" class="btn-secondary">Отмена</button>
-            <button id="vinSubmit" class="btn-primary">Отправить в очередь</button>
-        </div>
+    <div id="toast" class="toast">
+        <div id="toastText" class="toast-text"></div>
+        <div id="toastButtons" class="toast-buttons"></div>
     </div>
-</div>
 
     <script src="config.js"></script>
     <script src="volkswagen.js"></script>

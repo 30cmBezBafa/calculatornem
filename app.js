@@ -1,11 +1,9 @@
 // ============================================
-// НЕМЕЦИЯ — ОСНОВНАЯ ЛОГИКА (с кнопками "Добавить")
+// НЕМЕЦИЯ — ОСНОВНАЯ ЛОГИКА
 // ============================================
-
 (function() {
 'use strict';
 
-// --- STATE ---
 let currentBrand = null;
 let currentBrandData = null;
 let currentMod = null;
@@ -16,16 +14,14 @@ let isSaving = false;
 let searchActiveIndex = -1;
 let searchResults = [];
 
-// --- DOM HELPERS ---
-const $ = (id) => document.getElementById(id);
-const el = (tag, cls, html) => {
+const $ = function(id) { return document.getElementById(id); };
+const el = function(tag, cls, html) {
     const e = document.createElement(tag);
     if (cls) e.className = cls;
     if (html !== undefined) e.innerHTML = html;
     return e;
 };
 
-// --- UTILITIES ---
 function getRate(rateType) {
     return CONFIG.rates[rateType] || CONFIG.rates.standard;
 }
@@ -42,51 +38,51 @@ function debounce(fn, ms) {
     let t;
     return function(...args) {
         clearTimeout(t);
-        t = setTimeout(() => fn.apply(this, args), ms);
+        t = setTimeout(function() { fn.apply(this, args); }, ms);
     };
 }
 
-// Добавляет опцию "+ Добавить ..." в конец select
 function addAddOption(selectId, labelText) {
     const sel = $(selectId);
     if (!sel) return;
     const opt = document.createElement('option');
     opt.value = '__add__';
-    opt.textContent = `+ Добавить ${labelText}`;
+    opt.textContent = '+ Добавить ' + labelText;
     opt.style.color = '#0066cc';
     opt.style.fontWeight = 'bold';
     sel.appendChild(opt);
 }
 
-// Открывает модалку запроса на добавление
 function openAddModal(type) {
-    if ($('addType')) $('addType').value = type;
-    if ($('vinModal')) $('vinModal').classList.add('show');
+    const typeSel = $('addType');
+    if (typeSel) typeSel.value = type;
+    const overlay = document.querySelector('.modal-overlay');
+    if (overlay) overlay.classList.add('active');
 }
 
-// --- WORK ITEM TEMPLATE ---
+function closeAddModal() {
+    const overlay = document.querySelector('.modal-overlay');
+    if (overlay) overlay.classList.remove('active');
+}
+
 function workItemHTML(workId, work, price, inCalc, customNh) {
     const rateLabel = work.rateType === 'engine' ? 'ДВС' : '';
-    const badge = rateLabel ? `<span class="rate-badge ${work.rateType}">${rateLabel}</span>` : '';
-    const nhLabel = customNh ? `${customNh} н/ч` : `${work.nh} н/ч`;
-    const confidenceDot = customNh 
-        ? '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#27ae60;margin-left:6px;" title="Проверено для этого автомобиля"></span>'
-        : '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#e74c3c;margin-left:6px;" title="Усредненное значение"></span>';
+    const badge = rateLabel ? '<span class="rate-badge ' + work.rateType + '">' + rateLabel + '</span>' : '';
+    const nhLabel = customNh ? customNh + ' н/ч' : work.nh + ' н/ч';
+    const dotColor = customNh ? '#27ae60' : '#e74c3c';
+    const dotTitle = customNh ? 'Проверено для этого автомобиля' : 'Усредненное значение';
+    const confidenceDot = '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + dotColor + ';margin-left:6px;" title="' + dotTitle + '"></span>';
     const hasIncludes = work.includes && work.includes.length > 0;
-    const expandBtn = hasIncludes ? `<span class="expand-btn" data-work-id="${workId}" data-context="list">+</span>` : '';
-    return `
-        <div class="work-item${inCalc ? ' selected' : ''}${hasIncludes ? ' has-includes' : ''}" 
-             data-work-id="${workId}" tabindex="0">
-            <span class="checkbox"></span>
-            <span class="work-name">${work.name}${badge}</span>
-            <span class="work-nh">${nhLabel}${confidenceDot}</span>
-            <span class="work-price">${formatRub(price)}</span>
-            ${expandBtn}
-        </div>
-    `;
+    const expandBtn = hasIncludes ? '<span class="expand-btn" data-work-id="' + workId + '" data-context="list">+</span>' : '';
+    return '<div class="work-item' + (inCalc ? ' selected' : '') + (hasIncludes ? ' has-includes' : '') + '" data-work-id="' + workId + '" tabindex="0">' +
+        '<span class="checkbox"></span>' +
+        '<span class="work-name">' + work.name + badge + '</span>' +
+        '<span class="work-nh">' + nhLabel + confidenceDot + '</span>' +
+        '<span class="work-price">' + formatRub(price) + '</span>' +
+        expandBtn +
+        '</div>';
 }
 
-// --- INIT ---
 function init() {
     const savedTheme = localStorage.getItem('nemesia_theme') || 'light';
     document.documentElement.setAttribute('data-theme', savedTheme);
@@ -95,19 +91,19 @@ function init() {
     const mgrSel = $('managerSelect');
     if (mgrSel) {
         mgrSel.innerHTML = '<option value="">— выбрать —</option>' +
-            CONFIG.managers.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+            CONFIG.managers.map(function(m) { return '<option value="' + m.id + '">' + m.name + '</option>'; }).join('');
         const savedMgr = localStorage.getItem('nemesia_manager') || '';
         if (savedMgr) mgrSel.value = savedMgr;
-        mgrSel.onchange = () => localStorage.setItem('nemesia_manager', mgrSel.value);
+        mgrSel.onchange = function() { localStorage.setItem('nemesia_manager', mgrSel.value); };
     }
 
     const brandSel = $('brandSelect');
     if (brandSel) {
         brandSel.disabled = false;
         brandSel.innerHTML = '<option value="">— выбрать —</option>' +
-            CONFIG.brands.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+            CONFIG.brands.map(function(b) { return '<option value="' + b.id + '">' + b.name + '</option>'; }).join('');
         addAddOption('brandSelect', 'марку');
-        brandSel.onchange = () => {
+        brandSel.onchange = function() {
             if (brandSel.value === '__add__') {
                 openAddModal('Марка');
                 brandSel.value = '';
@@ -118,52 +114,32 @@ function init() {
     }
 
     if ($('modelSelect')) {
-        $('modelSelect').onchange = () => {
-            if ($('modelSelect').value === '__add__') {
-                openAddModal('Модель');
-                $('modelSelect').value = '';
-                return;
-            }
+        $('modelSelect').onchange = function() {
+            if ($('modelSelect').value === '__add__') { openAddModal('Модель'); $('modelSelect').value = ''; return; }
             onModelChange();
         };
     }
     if ($('genSelect')) {
-        $('genSelect').onchange = () => {
-            if ($('genSelect').value === '__add__') {
-                openAddModal('Поколение');
-                $('genSelect').value = '';
-                return;
-            }
+        $('genSelect').onchange = function() {
+            if ($('genSelect').value === '__add__') { openAddModal('Поколение'); $('genSelect').value = ''; return; }
             onGenChange();
         };
     }
     if ($('engineSelect')) {
-        $('engineSelect').onchange = () => {
-            if ($('engineSelect').value === '__add__') {
-                openAddModal('ДВС');
-                $('engineSelect').value = '';
-                return;
-            }
+        $('engineSelect').onchange = function() {
+            if ($('engineSelect').value === '__add__') { openAddModal('ДВС'); $('engineSelect').value = ''; return; }
             onEngineChange();
         };
     }
     if ($('gearboxSelect')) {
-        $('gearboxSelect').onchange = () => {
-            if ($('gearboxSelect').value === '__add__') {
-                openAddModal('КПП');
-                $('gearboxSelect').value = '';
-                return;
-            }
+        $('gearboxSelect').onchange = function() {
+            if ($('gearboxSelect').value === '__add__') { openAddModal('КПП'); $('gearboxSelect').value = ''; return; }
             onGearboxChange();
         };
     }
     if ($('driveSelect')) {
-        $('driveSelect').onchange = () => {
-            if ($('driveSelect').value === '__add__') {
-                openAddModal('Привод');
-                $('driveSelect').value = '';
-                return;
-            }
+        $('driveSelect').onchange = function() {
+            if ($('driveSelect').value === '__add__') { openAddModal('Привод'); $('driveSelect').value = ''; return; }
             onDriveChange();
         };
     }
@@ -176,14 +152,14 @@ function init() {
     if ($('clearAllBtn')) $('clearAllBtn').onclick = clearAll;
 
     if ($('themeToggle')) {
-        $('themeToggle').onchange = () => {
+        $('themeToggle').onchange = function() {
             const theme = $('themeToggle').checked ? 'dark' : 'light';
             document.documentElement.setAttribute('data-theme', theme);
             localStorage.setItem('nemesia_theme', theme);
         };
     }
 
-    if ($('vinCancel')) $('vinCancel').onclick = () => $('vinModal').classList.remove('active');
+    if ($('vinCancel')) $('vinCancel').onclick = closeAddModal;
     if ($('vinSubmit')) $('vinSubmit').onclick = submitVin;
 
     const last = localStorage.getItem('nemesia_lastCalc');
@@ -205,13 +181,11 @@ function init() {
     }
 }
 
-// --- BRAND CHANGE ---
 function onBrandChange() {
     const brandId = $('brandSelect').value;
     if (!brandId) return;
-    const brand = CONFIG.brands.find(b => b.id === brandId);
-    currentBrand = brand;
-    
+    currentBrand = CONFIG.brands.find(function(b) { return b.id === brandId; });
+
     if (brandId === 'volkswagen' && typeof volkswagenDB !== 'undefined') {
         currentBrandData = volkswagenDB;
     } else {
@@ -231,7 +205,7 @@ function onBrandChange() {
     expandedCats.clear();
     expandedIncludes.clear();
 
-    const models = [...new Set(currentBrandData.modifications.map(m => m.model))].sort();
+    const models = [...new Set(currentBrandData.modifications.map(function(m) { return m.model; }))].sort();
     fillSelect('modelSelect', models);
     addAddOption('modelSelect', 'модель');
 }
@@ -246,8 +220,8 @@ function onModelChange() {
     expandedCats.clear();
     expandedIncludes.clear();
 
-    const mods = currentBrandData.modifications.filter(m => m.model === model);
-    const gens = [...new Set(mods.map(m => m.generation))].sort();
+    const mods = currentBrandData.modifications.filter(function(m) { return m.model === model; });
+    const gens = [...new Set(mods.map(function(m) { return m.generation; }))].sort();
     fillSelect('genSelect', gens);
     addAddOption('genSelect', 'поколение');
 }
@@ -262,31 +236,35 @@ function onGenChange() {
     expandedCats.clear();
     expandedIncludes.clear();
 
-    const mods = currentBrandData.modifications.filter(m => m.model === model && m.generation === gen);
-    const engines = mods.map(m => ({
-        value: m.id,
-        label: `${m.engine.code} / ${m.engine.volume} / ${m.engine.power} / ${m.engine.torque}`,
-        mod: m
-    }));
-    fillSelect('engineSelect', engines.map(e => e.label), engines.map(e => e.value));
+    const mods = currentBrandData.modifications.filter(function(m) { return m.model === model && m.generation === gen; });
+    const engines = mods.map(function(m) {
+        return {
+            value: m.id,
+            label: m.engine.code + ' / ' + m.engine.volume + ' / ' + m.engine.power + ' / ' + m.engine.torque,
+            mod: m
+        };
+    });
+    fillSelect('engineSelect', engines.map(function(e) { return e.label; }), engines.map(function(e) { return e.value; }));
     addAddOption('engineSelect', 'ДВС');
 }
 
 function onEngineChange() {
     const modId = $('engineSelect').value;
     if (!modId || !currentBrandData) return;
-    const mods = currentBrandData.modifications.filter(m => m.id === modId);
+    const mods = currentBrandData.modifications.filter(function(m) { return m.id === modId; });
     resetSelect('gearboxSelect');
     resetSelect('driveSelect');
     expandedCats.clear();
     expandedIncludes.clear();
 
-    const gearboxes = mods.map(m => ({
-        value: m.id,
-        label: `${m.gearbox.code} / ${m.gearbox.type} / ${m.gearbox.gears} ст.`,
-        mod: m
-    }));
-    fillSelect('gearboxSelect', gearboxes.map(g => g.label), gearboxes.map(g => g.value));
+    const gearboxes = mods.map(function(m) {
+        return {
+            value: m.id,
+            label: m.gearbox.code + ' / ' + m.gearbox.type + ' / ' + m.gearbox.gears + ' ст.',
+            mod: m
+        };
+    });
+    fillSelect('gearboxSelect', gearboxes.map(function(g) { return g.label; }), gearboxes.map(function(g) { return g.value; }));
     addAddOption('gearboxSelect', 'КПП');
 }
 
@@ -297,8 +275,8 @@ function onGearboxChange() {
     expandedCats.clear();
     expandedIncludes.clear();
 
-    const mods = currentBrandData.modifications.filter(m => m.id === modId);
-    const drives = [...new Set(mods.map(m => m.drive))];
+    const mods = currentBrandData.modifications.filter(function(m) { return m.id === modId; });
+    const drives = [...new Set(mods.map(function(m) { return m.drive; }))];
     fillSelect('driveSelect', drives);
     addAddOption('driveSelect', 'привод');
 }
@@ -307,7 +285,7 @@ function onDriveChange() {
     const modId = $('gearboxSelect').value;
     if (!modId || !currentBrandData) return;
     const drive = $('driveSelect').value;
-    const mod = currentBrandData.modifications.find(m => m.id === modId && m.drive === drive);
+    const mod = currentBrandData.modifications.find(function(m) { return m.id === modId && m.drive === drive; });
     if (!mod) return;
 
     currentMod = mod;
@@ -321,7 +299,6 @@ function onDriveChange() {
     if ($('worksPanel')) $('worksPanel').style.display = 'block';
 }
 
-// --- SEARCH ---
 function onSearchInput() {
     const q = $('globalSearch').value.trim().toLowerCase();
     const dropdown = $('searchDropdown');
@@ -331,7 +308,7 @@ function onSearchInput() {
         else { dropdown.classList.remove('active'); return; }
     }
 
-    searchResults = currentBrandData.modifications.filter(m => {
+    searchResults = currentBrandData.modifications.filter(function(m) {
         return (
             m.model.toLowerCase().includes(q) ||
             m.generation.toLowerCase().includes(q) ||
@@ -344,14 +321,14 @@ function onSearchInput() {
     if (searchResults.length === 0) {
         dropdown.innerHTML = '<div class="item" style="color:var(--text-muted)">Ничего не найдено. <a href="#" onclick="openAddModal(\'Модификация целиком\'); return false;">Запросить добавление</a></div>';
     } else {
-        dropdown.innerHTML = searchResults.map((m, i) => `
-            <div class="item" data-index="${i}">
-                <div class="item-model">${m.model} — ${m.generation}</div>
-                <div class="item-detail">${m.engine.code} · ${m.engine.volume} · ${m.engine.power} · ${m.gearbox.code} · ${m.drive}</div>
-            </div>
-        `).join('');
-        dropdown.querySelectorAll('.item').forEach(item => {
-            item.onclick = () => {
+        dropdown.innerHTML = searchResults.map(function(m, i) {
+            return '<div class="item" data-index="' + i + '">' +
+                '<div class="item-model">' + m.model + ' — ' + m.generation + '</div>' +
+                '<div class="item-detail">' + m.engine.code + ' · ' + m.engine.volume + ' · ' + m.engine.power + ' · ' + m.gearbox.code + ' · ' + m.drive + '</div>' +
+                '</div>';
+        }).join('');
+        dropdown.querySelectorAll('.item').forEach(function(item) {
+            item.onclick = function() {
                 const idx = parseInt(item.dataset.index);
                 selectFromSearch(searchResults[idx]);
             };
@@ -370,12 +347,12 @@ function onSearchKeydown(e) {
     if (e.key === 'ArrowDown') {
         e.preventDefault();
         searchActiveIndex = Math.min(searchActiveIndex + 1, items.length - 1);
-        items.forEach((it, i) => it.classList.toggle('active', i === searchActiveIndex));
+        items.forEach(function(it, i) { it.classList.toggle('active', i === searchActiveIndex); });
         items[searchActiveIndex].scrollIntoView({ block: 'nearest' });
     } else if (e.key === 'ArrowUp') {
         e.preventDefault();
         searchActiveIndex = Math.max(searchActiveIndex - 1, 0);
-        items.forEach((it, i) => it.classList.toggle('active', i === searchActiveIndex));
+        items.forEach(function(it, i) { it.classList.toggle('active', i === searchActiveIndex); });
         items[searchActiveIndex].scrollIntoView({ block: 'nearest' });
     } else if (e.key === 'Enter') {
         e.preventDefault();
@@ -391,7 +368,6 @@ function onSearchKeydown(e) {
 function selectFromSearch(mod) {
     $('searchDropdown').classList.remove('active');
     $('globalSearch').value = '';
-
     $('brandSelect').value = 'volkswagen';
     onBrandChange();
     $('modelSelect').value = mod.model;
@@ -406,32 +382,31 @@ function selectFromSearch(mod) {
     onDriveChange();
 }
 
-document.addEventListener('click', (e) => {
+document.addEventListener('click', function(e) {
     if (!e.target.closest('.car-search-wrapper')) {
         const dropdown = $('searchDropdown');
         if (dropdown) dropdown.classList.remove('active');
     }
 });
 
-// --- WORKS SEARCH ---
 function onWorksSearch() {
     const q = $('worksSearch').value.trim().toLowerCase();
     const cats = document.querySelectorAll('.work-category');
     if (!q) {
-        cats.forEach(cat => {
+        cats.forEach(function(cat) {
             const catKey = cat.dataset.cat;
             const header = cat.querySelector('.work-category-header');
             const body = cat.querySelector('.work-category-body');
             const expanded = expandedCats.has(catKey);
             header.classList.toggle('expanded', expanded);
             body.classList.toggle('expanded', expanded);
-            cat.querySelectorAll('.work-item').forEach(w => w.style.display = '');
+            cat.querySelectorAll('.work-item').forEach(function(w) { w.style.display = ''; });
         });
         return;
     }
-    cats.forEach(cat => {
+    cats.forEach(function(cat) {
         let visible = 0;
-        cat.querySelectorAll('.work-item').forEach(w => {
+        cat.querySelectorAll('.work-item').forEach(function(w) {
             const name = w.querySelector('.work-name').textContent.toLowerCase();
             const match = name.includes(q);
             w.style.display = match ? '' : 'none';
@@ -450,7 +425,6 @@ function onWorksSearch() {
     });
 }
 
-// --- FLUIDS ---
 function renderFluids(mod) {
     const f = mod.fluids;
     const rows = [
@@ -465,38 +439,37 @@ function renderFluids(mod) {
         ['Хладагент кондиционера', f.refrigerant]
     ];
     let html = '<tr><th>Жидкость</th><th>Объём</th><th>Допуск</th><th>Вязкость</th></tr>';
-    rows.forEach(([name, data]) => {
+    rows.forEach(function(row) {
+        const name = row[0];
+        const data = row[1];
         if (!data) {
-            html += `<tr><td class="fluid-name">${name}</td><td class="fluid-na" colspan="3">—</td></tr>`;
+            html += '<tr><td class="fluid-name">' + name + '</td><td class="fluid-na" colspan="3">—</td></tr>';
         } else {
-            html += `<tr><td class="fluid-name">${name}</td><td>${data.volume}</td><td>${data.spec}</td><td>${data.viscosity}</td></tr>`;
+            html += '<tr><td class="fluid-name">' + name + '</td><td>' + data.volume + '</td><td>' + data.spec + '</td><td>' + data.viscosity + '</td></tr>';
         }
     });
     if ($('fluidsTable')) $('fluidsTable').innerHTML = html;
     if ($('fluidsPanel')) $('fluidsPanel').classList.add('active');
 }
 
-// --- WORKS LIST ---
 function renderWorks(mod) {
     const container = $('worksList');
     container.innerHTML = '';
 
     const byCat = {};
     const modGearboxType = mod.gearboxType || null;
-    
-    mod.works.forEach(wid => {
+
+    mod.works.forEach(function(wid) {
         const w = worksCatalog[wid];
         if (!w) { console.warn('Unknown workId:', wid); return; }
-        
         if (w.gearboxType && modGearboxType) {
             if (!w.gearboxType.includes(modGearboxType)) return;
         }
-        
         if (!byCat[w.cat]) byCat[w.cat] = [];
         byCat[w.cat].push(wid);
     });
 
-    Object.keys(categories).forEach(catKey => {
+    Object.keys(categories).forEach(function(catKey) {
         if (!byCat[catKey]) return;
         const catDiv = el('div', 'work-category');
         catDiv.dataset.cat = catKey;
@@ -504,26 +477,26 @@ function renderWorks(mod) {
         const body = el('div', 'work-category-body');
         const header = el('div', 'work-category-header');
         const isExpanded = expandedCats.has(catKey);
-        
+
         if (isExpanded) {
             header.classList.add('expanded');
             body.classList.add('expanded');
         }
-        
-        header.innerHTML = `<span class="arrow">▶</span> ${categories[catKey]} <span class="count">${byCat[catKey].length}</span>`;
-        header.onclick = () => {
+
+        header.innerHTML = '<span class="arrow">▶</span> ' + categories[catKey] + ' <span class="count">' + byCat[catKey].length + '</span>';
+        header.onclick = function() {
             const expanded = header.classList.toggle('expanded');
             body.classList.toggle('expanded', expanded);
             if (expanded) expandedCats.add(catKey);
             else expandedCats.delete(catKey);
         };
 
-        byCat[catKey].forEach(wid => {
+        byCat[catKey].forEach(function(wid) {
             const w = worksCatalog[wid];
             const customNh = (mod.customNh && mod.customNh[wid]) ? mod.customNh[wid] : null;
             const finalNh = customNh || w.nh;
             const price = workPrice(finalNh, w.rateType);
-            const inCalc = selectedWorks.some(sw => sw.workId === wid);
+            const inCalc = selectedWorks.some(function(sw) { return sw.workId === wid; });
             body.insertAdjacentHTML('beforeend', workItemHTML(wid, w, price, inCalc, customNh));
         });
 
@@ -542,7 +515,7 @@ function onWorksListClick(e) {
         const wid = expandBtn.dataset.workId;
         const item = expandBtn.closest('.work-item');
         item.classList.toggle('includes-expanded');
-        
+
         let incList = item.nextElementSibling;
         if (incList && incList.classList.contains('includes-list')) {
             incList.classList.toggle('expanded');
@@ -550,12 +523,12 @@ function onWorksListClick(e) {
             const w = worksCatalog[wid];
             if (w && w.includes) {
                 const list = el('div', 'includes-list');
-                w.includes.forEach(incId => {
+                w.includes.forEach(function(incId) {
                     const inc = worksCatalog[incId];
                     if (inc) {
                         const incPrice = workPrice(inc.nh, inc.rateType);
                         list.insertAdjacentHTML('beforeend',
-                            `<div class="include-item"><span>${inc.name}</span><span>${inc.nh} н/ч · ${formatRub(incPrice)}</span></div>`);
+                            '<div class="include-item"><span>' + inc.name + '</span><span>' + inc.nh + ' н/ч · ' + formatRub(incPrice) + '</span></div>');
                     }
                 });
                 list.classList.add('expanded');
@@ -571,11 +544,10 @@ function onWorksListClick(e) {
     toggleWork(wid, item);
 }
 
-// --- TOGGLE WORK ---
 function toggleWork(workId, itemEl) {
     const w = worksCatalog[workId];
     if (!w) return;
-    const idx = selectedWorks.findIndex(sw => sw.workId === workId);
+    const idx = selectedWorks.findIndex(function(sw) { return sw.workId === workId; });
     if (idx >= 0) {
         selectedWorks.splice(idx, 1);
         itemEl.classList.remove('selected');
@@ -598,7 +570,6 @@ function toggleWork(workId, itemEl) {
     renderCalc();
 }
 
-// --- CALC PANEL ---
 function renderCalc() {
     const body = $('calcBody');
     if (!body) return;
@@ -611,96 +582,96 @@ function renderCalc() {
     let totalWorks = 0;
     let totalCoeff = 0;
 
-    selectedWorks.forEach((sw, i) => {
+    selectedWorks.forEach(function(sw, i) {
         const w = worksCatalog[sw.workId];
         const hasIncludes = sw.includes && sw.includes.length > 0;
         const isIncExpanded = expandedIncludes.has(sw.workId);
 
         let coeffSum = 0;
-        sw.coefficients.forEach(c => { coeffSum += c.rub; });
+        sw.coefficients.forEach(function(c) { coeffSum += c.rub; });
 
-        html += `<div class="calc-work-card${hasIncludes ? ' has-includes' : ''}" data-index="${i}">`;
-        html += `<div class="calc-work-header">`;
-        html += `<span class="calc-work-name">${sw.name}</span>`;
+        html += '<div class="calc-work-card' + (hasIncludes ? ' has-includes' : '') + '" data-index="' + i + '">';
+        html += '<div class="calc-work-header">';
+        html += '<span class="calc-work-name">' + sw.name + '</span>';
         if (hasIncludes) {
-            html += `<span class="expand-btn" data-calc-wid="${sw.workId}" style="cursor:pointer;font-size:14px;width:20px;height:20px;display:flex;align-items:center;justify-content:center;border-radius:3px;flex-shrink:0;">${isIncExpanded ? '−' : '+'}</span>`;
+            html += '<span class="expand-btn" data-calc-wid="' + sw.workId + '" style="cursor:pointer;font-size:14px;width:20px;height:20px;display:flex;align-items:center;justify-content:center;border-radius:3px;flex-shrink:0;">' + (isIncExpanded ? '−' : '+') + '</span>';
         }
-        html += `<span class="calc-work-remove" data-index="${i}">×</span>`;
-        html += `</div>`;
-        html += `<div class="calc-work-info">`;
-        html += `<span>${sw.nh} н/ч · ${formatRub(sw.price)}</span>`;
-        html += `<span class="calc-work-price">${formatRub(sw.price + coeffSum)}</span>`;
-        html += `</div>`;
+        html += '<span class="calc-work-remove" data-index="' + i + '">×</span>';
+        html += '</div>';
+        html += '<div class="calc-work-info">';
+        html += '<span>' + sw.nh + ' н/ч · ' + formatRub(sw.price) + '</span>';
+        html += '<span class="calc-work-price">' + formatRub(sw.price + coeffSum) + '</span>';
+        html += '</div>';
 
         if (hasIncludes && isIncExpanded) {
-            html += `<div class="includes-list expanded" style="padding:4px 0 4px 12px;">`;
-            sw.includes.forEach(incId => {
+            html += '<div class="includes-list expanded" style="padding:4px 0 4px 12px;">';
+            sw.includes.forEach(function(incId) {
                 const inc = worksCatalog[incId];
                 if (inc) {
                     const incPrice = workPrice(inc.nh, inc.rateType);
-                    html += `<div class="include-item"><span>${inc.name}</span><span>${inc.nh} н/ч · ${formatRub(incPrice)}</span></div>`;
+                    html += '<div class="include-item"><span>' + inc.name + '</span><span>' + inc.nh + ' н/ч · ' + formatRub(incPrice) + '</span></div>';
                 }
             });
-            html += `</div>`;
+            html += '</div>';
         }
 
-        html += `<div class="coeff-row" data-index="${i}">`;
+        html += '<div class="coeff-row" data-index="' + i + '">';
         if (sw.coefficients.length > 0) {
-            sw.coefficients.forEach((c, ci) => {
-                html += `<div class="coeff-display">${CONFIG.coefficients[c.type].label}: +${c.percent}% <span class="coeff-rub">(${formatRub(c.rub)})</span> <span class="coeff-remove" data-cindex="${ci}">убрать</span></div>`;
+            sw.coefficients.forEach(function(c, ci) {
+                html += '<div class="coeff-display">' + CONFIG.coefficients[c.type].label + ': +' + c.percent + '% <span class="coeff-rub">(' + formatRub(c.rub) + ')</span> <span class="coeff-remove" data-cindex="' + ci + '">убрать</span></div>';
             });
         }
-        html += `<select class="coeff-add" data-index="${i}"><option value="">+ Добавить коэффициент</option>`;
-        Object.keys(CONFIG.coefficients).forEach(ck => {
-            const already = sw.coefficients.some(c => c.type === ck);
+        html += '<select class="coeff-add" data-index="' + i + '"><option value="">+ Добавить коэффициент</option>';
+        Object.keys(CONFIG.coefficients).forEach(function(ck) {
+            const already = sw.coefficients.some(function(c) { return c.type === ck; });
             if (!already) {
-                html += `<option value="${ck}">${CONFIG.coefficients[ck].label} (+${CONFIG.coefficients[ck].percent}%)</option>`;
+                html += '<option value="' + ck + '">' + CONFIG.coefficients[ck].label + ' (+' + CONFIG.coefficients[ck].percent + '%)</option>';
             }
         });
-        html += `</select></div></div>`;
+        html += '</select></div></div>';
 
         totalWorks += sw.price + coeffSum;
         totalCoeff += coeffSum;
     });
 
-    html += `<div class="calc-total">`;
-    html += `<div class="calc-total-row"><span>Работы:</span><span>${formatRub(totalWorks - totalCoeff)}</span></div>`;
+    html += '<div class="calc-total">';
+    html += '<div class="calc-total-row"><span>Работы:</span><span>' + formatRub(totalWorks - totalCoeff) + '</span></div>';
     if (totalCoeff > 0) {
-        html += `<div class="calc-total-row"><span>Коэффициенты:</span><span>+${formatRub(totalCoeff)}</span></div>`;
+        html += '<div class="calc-total-row"><span>Коэффициенты:</span><span>+' + formatRub(totalCoeff) + '</span></div>';
     }
-    html += `<div class="calc-total-row final"><span>Итого:</span><span>${formatRub(totalWorks)}</span></div>`;
-    html += `</div>`;
+    html += '<div class="calc-total-row final"><span>Итого:</span><span>' + formatRub(totalWorks) + '</span></div>';
+    html += '</div>';
 
     body.innerHTML = html;
 
-    body.querySelectorAll('.calc-work-remove').forEach(btn => {
-        btn.onclick = (e) => {
+    body.querySelectorAll('.calc-work-remove').forEach(function(btn) {
+        btn.onclick = function(e) {
             e.stopPropagation();
             const idx = parseInt(btn.dataset.index);
             const wid = selectedWorks[idx].workId;
             selectedWorks.splice(idx, 1);
             expandedIncludes.delete(wid);
-            const leftItem = document.querySelector(`.work-item[data-work-id="${wid}"]`);
+            const leftItem = document.querySelector('.work-item[data-work-id="' + wid + '"]');
             if (leftItem) leftItem.classList.remove('selected');
             renderCalc();
         };
     });
 
-    body.querySelectorAll('.coeff-add').forEach(sel => {
-        sel.onchange = () => {
+    body.querySelectorAll('.coeff-add').forEach(function(sel) {
+        sel.onchange = function() {
             const idx = parseInt(sel.dataset.index);
             const cType = sel.value;
             if (!cType) return;
             const sw = selectedWorks[idx];
             const percent = CONFIG.coefficients[cType].percent;
             const rub = Math.round(sw.price * percent / 100);
-            sw.coefficients.push({ type: cType, percent, rub });
+            sw.coefficients.push({ type: cType, percent: percent, rub: rub });
             renderCalc();
         };
     });
 
-    body.querySelectorAll('.coeff-remove').forEach(btn => {
-        btn.onclick = (e) => {
+    body.querySelectorAll('.coeff-remove').forEach(function(btn) {
+        btn.onclick = function(e) {
             e.stopPropagation();
             const workIdx = parseInt(btn.closest('.coeff-row').dataset.index);
             const coeffIdx = parseInt(btn.dataset.cindex);
@@ -709,8 +680,8 @@ function renderCalc() {
         };
     });
 
-    body.querySelectorAll('.expand-btn[data-calc-wid]').forEach(btn => {
-        btn.onclick = (e) => {
+    body.querySelectorAll('.expand-btn[data-calc-wid]').forEach(function(btn) {
+        btn.onclick = function(e) {
             e.stopPropagation();
             const wid = btn.dataset.calcWid;
             if (expandedIncludes.has(wid)) expandedIncludes.delete(wid);
@@ -720,34 +691,36 @@ function renderCalc() {
     });
 }
 
-// --- SAVE CALCULATION ---
 function saveCalculation() {
     if (isSaving || selectedWorks.length === 0 || !currentMod) return;
 
     isSaving = true;
-    setTimeout(() => { isSaving = false; }, 1000);
+    setTimeout(function() { isSaving = false; }, 1000);
 
-    const mgr = $('managerSelect')?.value;
-    const mgrName = CONFIG.managers.find(m => m.id === mgr)?.name || '—';
+    const mgr = $('managerSelect') ? $('managerSelect').value : '';
+    const mgrName = CONFIG.managers.find(function(m) { return m.id === mgr; });
+    const mgrLabel = mgrName ? mgrName.name : '—';
 
-    const total = selectedWorks.reduce((sum, sw) => {
-        const coeffSum = sw.coefficients.reduce((s, c) => s + c.rub, 0);
+    const total = selectedWorks.reduce(function(sum, sw) {
+        const coeffSum = sw.coefficients.reduce(function(s, c) { return s + c.rub; }, 0);
         return sum + sw.price + coeffSum;
     }, 0);
 
     const record = {
         id: Date.now(),
         date: new Date().toISOString(),
-        manager: mgrName,
+        manager: mgrLabel,
         modificationId: currentMod.id,
-        carLabel: `${currentBrand?.name || ''} ${currentMod.model} ${currentMod.generation} ${currentMod.engine.code}`,
+        carLabel: (currentBrand ? currentBrand.name : '') + ' ' + currentMod.model + ' ' + currentMod.generation + ' ' + currentMod.engine.code,
         worksCount: selectedWorks.length,
         total: total,
-        works: selectedWorks.map(sw => ({
-            workId: sw.workId,
-            nh: sw.nh,
-            coefficients: sw.coefficients.map(c => c.type)
-        }))
+        works: selectedWorks.map(function(sw) {
+            return {
+                workId: sw.workId,
+                nh: sw.nh,
+                coefficients: sw.coefficients.map(function(c) { return c.type; })
+            };
+        })
     };
 
     let history = [];
@@ -761,19 +734,18 @@ function saveCalculation() {
     showToast('Расчёт сохранён');
 }
 
-// --- RESTORE ---
 function showRestoreToast(data) {
     if (!$('toastText') || !$('toastButtons') || !$('toast')) return;
-    $('toastText').innerHTML = `Восстановить последний расчёт?<br><strong>${data.carLabel}</strong> — ${data.worksCount} работ, ${formatRub(data.total)}`;
+    $('toastText').innerHTML = 'Восстановить последний расчёт?<br><strong>' + data.carLabel + '</strong> — ' + data.worksCount + ' работ, ' + formatRub(data.total);
     const btns = $('toastButtons');
     btns.innerHTML = '';
     const yesBtn = el('button', 'toast-btn primary', 'Да');
-    yesBtn.onclick = () => {
+    yesBtn.onclick = function() {
         $('toast').classList.remove('active');
         restoreCalc(data);
     };
     const noBtn = el('button', 'toast-btn', 'Нет');
-    noBtn.onclick = () => {
+    noBtn.onclick = function() {
         $('toast').classList.remove('active');
         localStorage.removeItem('nemesia_lastCalc');
     };
@@ -784,7 +756,7 @@ function showRestoreToast(data) {
 
 function restoreCalc(data) {
     if (!currentBrandData) return;
-    const mod = currentBrandData.modifications.find(m => m.id === data.modificationId);
+    const mod = currentBrandData.modifications.find(function(m) { return m.id === data.modificationId; });
     if (!mod) return;
 
     $('brandSelect').value = 'volkswagen';
@@ -801,12 +773,12 @@ function restoreCalc(data) {
     onDriveChange();
 
     selectedWorks = [];
-    data.works.forEach(sw => {
+    data.works.forEach(function(sw) {
         const w = worksCatalog[sw.workId];
         if (!w) return;
         const nh = sw.nh !== undefined ? sw.nh : w.nh;
         const price = workPrice(nh, w.rateType);
-        const coefficients = (sw.coefficients || []).map(cType => {
+        const coefficients = (sw.coefficients || []).map(function(cType) {
             const c = CONFIG.coefficients[cType];
             if (!c) return null;
             return { type: cType, percent: c.percent, rub: Math.round(price * c.percent / 100) };
@@ -827,7 +799,6 @@ function restoreCalc(data) {
     showToast('Расчёт восстановлен');
 }
 
-// --- HISTORY ---
 function renderHistory() {
     let history = [];
     try { history = JSON.parse(localStorage.getItem('nemesia_history') || '[]'); } catch(e) {}
@@ -839,22 +810,16 @@ function renderHistory() {
     const list = $('historyList');
     if (!list) return;
     list.innerHTML = '';
-    history.forEach(h => {
+    history.forEach(function(h) {
         const card = el('div', 'history-card');
-        card.innerHTML = `
-            <div class="h-row">
-                <span class="h-car">${h.carLabel}</span>
-                <span class="h-sum">${formatRub(h.total)}</span>
-            </div>
-            <div class="h-date">${new Date(h.date).toLocaleString('ru-RU')} · ${h.manager}</div>
-            <div class="h-works">${h.worksCount} работ</div>
-        `;
-        card.onclick = () => restoreCalc(h);
+        card.innerHTML = '<div class="h-row"><span class="h-car">' + h.carLabel + '</span><span class="h-sum">' + formatRub(h.total) + '</span></div>' +
+            '<div class="h-date">' + new Date(h.date).toLocaleString('ru-RU') + ' · ' + h.manager + '</div>' +
+            '<div class="h-works">' + h.worksCount + ' работ</div>';
+        card.onclick = function() { restoreCalc(h); };
         list.appendChild(card);
     });
 }
 
-// --- CLEAR ALL ---
 function clearAll() {
     selectedWorks = [];
     expandedCats.clear();
@@ -874,31 +839,34 @@ function clearAll() {
     showToast('Все поля очищены');
 }
 
-// --- VIN / ADD MODAL ---
 function submitVin() {
-    const vin = $('vinInput')?.value.trim();
-    const comment = $('vinComment')?.value.trim();
-    const addType = $('addType')?.value || 'Модификация целиком';
-    const description = $('addDescription')?.value.trim();
-    
-    if (!description && !vin) { 
-        showToast('Опишите запрос или введите VIN'); 
-        return; 
+    const vin = $('vinInput') ? $('vinInput').value.trim() : '';
+    const comment = $('vinComment') ? $('vinComment').value.trim() : '';
+    const addType = $('addType') ? $('addType').value : 'Модификация целиком';
+    const description = $('addDescription') ? $('addDescription').value.trim() : '';
+
+    if (!description && !vin) {
+        showToast('Опишите запрос или введите VIN');
+        return;
     }
-    
+
     let queue = [];
     try { queue = JSON.parse(localStorage.getItem('nemesia_vinQueue') || '[]'); } catch(e) {}
+
+    const mgrSel = $('managerSelect');
+    const mgrName = mgrSel ? CONFIG.managers.find(function(m) { return m.id === mgrSel.value; }) : null;
+
     queue.push({
         type: addType,
         description: description,
         vin: vin,
         comment: comment,
         date: new Date().toISOString(),
-        manager: CONFIG.managers.find(m => m.id === $('managerSelect')?.value)?.name || '—'
+        manager: mgrName ? mgrName.name : '—'
     });
     localStorage.setItem('nemesia_vinQueue', JSON.stringify(queue));
-    
-    if ($('vinModal')) $('vinModal').classList.remove('show');
+
+    closeAddModal();
     if ($('vinInput')) $('vinInput').value = '';
     if ($('vinComment')) $('vinComment').value = '';
     if ($('addDescription')) $('addDescription').value = '';
@@ -917,19 +885,19 @@ function renderVinQueue() {
         return;
     }
 
-    container.innerHTML = queue.map((item, i) => `
-        <div class="queue-item">
-            <div class="queue-type"><strong>${item.type || 'Запрос'}</strong></div>
-            ${item.description ? `<div class="queue-desc">${item.description}</div>` : ''}
-            ${item.vin ? `<div class="queue-vin">VIN: ${item.vin}</div>` : ''}
-            ${item.comment ? `<div class="queue-comment">${item.comment}</div>` : ''}
-            <div class="queue-manager">${item.manager} · ${new Date(item.date).toLocaleString('ru-RU', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'})}</div>
-            <button class="queue-remove" data-index="${i}">×</button>
-        </div>
-    `).join('');
+    container.innerHTML = queue.map(function(item, i) {
+        return '<div class="queue-item">' +
+            '<div class="queue-type"><strong>' + (item.type || 'Запрос') + '</strong></div>' +
+            (item.description ? '<div class="queue-desc">' + item.description + '</div>' : '') +
+            (item.vin ? '<div class="queue-vin">VIN: ' + item.vin + '</div>' : '') +
+            (item.comment ? '<div class="queue-comment">' + item.comment + '</div>' : '') +
+            '<div class="queue-manager">' + item.manager + ' · ' + new Date(item.date).toLocaleString('ru-RU', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'}) + '</div>' +
+            '<button class="queue-remove" data-index="' + i + '">×</button>' +
+            '</div>';
+    }).join('');
 
-    container.querySelectorAll('.queue-remove').forEach(btn => {
-        btn.onclick = () => {
+    container.querySelectorAll('.queue-remove').forEach(function(btn) {
+        btn.onclick = function() {
             const idx = parseInt(btn.dataset.index);
             queue.splice(idx, 1);
             localStorage.setItem('nemesia_vinQueue', JSON.stringify(queue));
@@ -938,19 +906,18 @@ function renderVinQueue() {
     });
 }
 
-// --- HELPERS ---
 function fillSelect(id, labels, values) {
     const sel = $(id);
     if (!sel) return;
     sel.disabled = false;
     sel.innerHTML = '<option value="">— выбрать —</option>';
     if (values) {
-        labels.forEach((l, i) => {
-            sel.insertAdjacentHTML('beforeend', `<option value="${values[i]}">${l}</option>`);
+        labels.forEach(function(l, i) {
+            sel.insertAdjacentHTML('beforeend', '<option value="' + values[i] + '">' + l + '</option>');
         });
     } else {
-        labels.forEach(l => {
-            sel.insertAdjacentHTML('beforeend', `<option value="${l}">${l}</option>`);
+        labels.forEach(function(l) {
+            sel.insertAdjacentHTML('beforeend', '<option value="' + l + '">' + l + '</option>');
         });
     }
 }
@@ -967,9 +934,8 @@ function showToast(msg) {
     $('toastText').innerHTML = msg;
     if ($('toastButtons')) $('toastButtons').innerHTML = '';
     $('toast').classList.add('active');
-    setTimeout(() => $('toast').classList.remove('active'), 3000);
+    setTimeout(function() { $('toast').classList.remove('active'); }, 3000);
 }
 
-// --- START ---
 document.addEventListener('DOMContentLoaded', init);
 })();
