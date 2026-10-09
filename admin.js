@@ -8,7 +8,44 @@
 const $ = (id) => document.getElementById(id);
 const el = (tag, cls, html) => {
     const e = document.createElement(tag);
-    if (cls) e.className = cls;
+    if (cls) e.className = cls;function renderVinQueue() {
+    const container = $('vinQueueList');
+    if (!container) return;
+    
+    let queue = [];
+    try {
+        queue = JSON.parse(localStorage.getItem('nemesia_vinQueue') || '[]');
+    } catch(e) {}
+
+    if (queue.length === 0) {
+        container.innerHTML = '<div class="queue-empty">Очередь запросов пуста</div>';
+        return;
+    }
+
+    container.innerHTML = queue.map((item, i) => `
+        <div class="queue-item">
+            <div class="queue-header">
+                <span class="queue-type-badge">${item.type || 'Запрос'}</span>
+                <span class="queue-date">${new Date(item.date).toLocaleString('ru-RU', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'})}</span>
+            </div>
+            ${item.description ? `<div class="queue-desc"><strong>Описание:</strong> ${item.description}</div>` : ''}
+            ${item.vin ? `<div class="queue-vin"><strong>VIN:</strong> ${item.vin}</div>` : ''}
+            ${item.comment ? `<div class="queue-comment"><strong>Комментарий:</strong> ${item.comment}</div>` : ''}
+            <div class="queue-manager">Менеджер: ${item.manager || '—'}</div>
+            <button class="queue-remove" data-index="${i}" title="Удалить из очереди">×</button>
+        </div>
+    `).join('');
+
+    container.querySelectorAll('.queue-remove').forEach(btn => {
+        btn.onclick = () => {
+            const idx = parseInt(btn.dataset.index);
+            queue.splice(idx, 1);
+            localStorage.setItem('nemesia_vinQueue', JSON.stringify(queue));
+            renderVinQueue();
+            showToast('Запрос удалён из очереди');
+        };
+    });
+}
     if (html !== undefined) e.innerHTML = html;
     return e;
 };
@@ -94,30 +131,41 @@ function addManager() {
 
 // --- VIN QUEUE ---
 function renderVinQueue() {
+    const container = $('vinQueueList');
+    if (!container) return;
+    
     let queue = [];
     try {
         queue = JSON.parse(localStorage.getItem('nemesia_vinQueue') || '[]');
     } catch(e) {}
-    const container = $('vinQueueList');
+
     if (queue.length === 0) {
-        container.innerHTML = '<p style="color:var(--text-muted)">Очередь пуста</p>';
+        container.innerHTML = '<div class="queue-empty">Очередь запросов пуста</div>';
         return;
     }
-    container.innerHTML = '';
-    queue.forEach((item, i) => {
-        const div = el('div', 'vin-queue-item');
-        div.innerHTML = `
-            <div class="vin-line">VIN: ${item.vin}</div>
-            ${item.comment ? `<div class="vin-comment">${item.comment}</div>` : ''}
-            <div class="vin-meta">${new Date(item.date).toLocaleString('ru-RU')} · ${item.manager}</div>
-            <button class="admin-btn danger small" style="margin-top:6px" data-idx="${i}">Удалить из очереди</button>
-        `;
-        div.querySelector('button').onclick = () => {
-            queue.splice(i, 1);
+
+    container.innerHTML = queue.map((item, i) => `
+        <div class="queue-item">
+            <div class="queue-header">
+                <span class="queue-type-badge">${item.type || 'Запрос'}</span>
+                <span class="queue-date">${new Date(item.date).toLocaleString('ru-RU', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'})}</span>
+            </div>
+            ${item.description ? `<div class="queue-desc"><strong>Описание:</strong> ${item.description}</div>` : ''}
+            ${item.vin ? `<div class="queue-vin"><strong>VIN:</strong> ${item.vin}</div>` : ''}
+            ${item.comment ? `<div class="queue-comment"><strong>Комментарий:</strong> ${item.comment}</div>` : ''}
+            <div class="queue-manager">Менеджер: ${item.manager || '—'}</div>
+            <button class="queue-remove" data-index="${i}" title="Удалить из очереди">×</button>
+        </div>
+    `).join('');
+
+    container.querySelectorAll('.queue-remove').forEach(btn => {
+        btn.onclick = () => {
+            const idx = parseInt(btn.dataset.index);
+            queue.splice(idx, 1);
             localStorage.setItem('nemesia_vinQueue', JSON.stringify(queue));
             renderVinQueue();
+            showToast('Запрос удалён из очереди');
         };
-        container.appendChild(div);
     });
 }
 
