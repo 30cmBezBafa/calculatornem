@@ -68,7 +68,7 @@ function currentBrandId() {
     return currentBrand ? currentBrand.id : 'volkswagen';
 }
 
-// Тип ГРМ: явное поле или по работам модификации
+// Тип ГРМ: явное поле timing или по работам модификации
 function timingLabel(mod) {
     if (mod.timing) return mod.timing;
     if (mod.works) {
@@ -398,7 +398,12 @@ function onGenChange() {
     expandedCats.clear(); expandedIncludes.clear();
     const mods = currentBrandData.modifications.filter(function(m) { return m.model === model && m.generation === gen; });
     const engines = mods.map(function(m) {
-        return { value: m.id, label: m.engine.code + ' / ' + m.engine.volume + ' / ' + m.engine.power + ' / ' + m.engine.torque, mod: m };
+        const timing = timingLabel(m);
+        return {
+            value: m.id,
+            label: m.engine.code + ' / ' + m.engine.volume + ' / ' + m.engine.power + ' / ' + m.engine.torque + (timing ? ' / ' + timing : ''),
+            mod: m
+        };
     });
     fillSelect('engineSelect', engines.map(function(e) { return e.label; }), engines.map(function(e) { return e.value; }));
     addAddOption('engineSelect', 'ДВС');
@@ -527,14 +532,9 @@ function onWorksSearch() {
     });
 }
 
-// --- FLUIDS + TECH DATA ---
+// --- FLUIDS (только жидкости, без ГРМ и привода) ---
 function renderFluids(mod) {
     const f = mod.fluids;
-    const panel = $('fluidsPanel');
-    if (panel) {
-        const h2 = panel.querySelector('h2');
-        if (h2) h2.textContent = 'Технические данные и заправочные объёмы';
-    }
     const rows = [
         ['Моторное масло', f.engine_oil],
         ['Масло КПП', f.gearbox_oil],
@@ -546,16 +546,13 @@ function renderFluids(mod) {
         ['Усилитель руля (ГУР)', f.power_steering],
         ['Хладагент кондиционера', f.refrigerant]
     ];
-    let html = '<tr><th>Параметр</th><th>Объём</th><th>Допуск</th><th>Вязкость</th></tr>';
-    const timing = timingLabel(mod);
-    html += '<tr><td class="fluid-name">Привод ГРМ</td><td colspan="3"><strong>' + (timing ? timing : '—') + '</strong></td></tr>';
-    html += '<tr><td class="fluid-name">Привод</td><td colspan="3"><strong>' + driveLabel(mod.drive, currentBrandId()) + '</strong></td></tr>';
+    let html = '<tr><th>Жидкость</th><th>Объём</th><th>Допуск</th><th>Вязкость</th></tr>';
     rows.forEach(function(row) {
         if (!row[1]) html += '<tr><td class="fluid-name">' + row[0] + '</td><td class="fluid-na" colspan="3">—</td></tr>';
         else html += '<tr><td class="fluid-name">' + row[0] + '</td><td>' + dash(row[1].volume) + '</td><td>' + dash(row[1].spec) + '</td><td>' + dash(row[1].viscosity) + '</td></tr>';
     });
     if ($('fluidsTable')) $('fluidsTable').innerHTML = html;
-    if (panel) panel.classList.add('active');
+    if ($('fluidsPanel')) $('fluidsPanel').classList.add('active');
 }
 
 // --- WORKS LIST ---
