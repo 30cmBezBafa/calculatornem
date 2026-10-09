@@ -1,5 +1,5 @@
 // ============================================
-// НЕМЕЦИЯ — ОСНОВНАЯ ЛОГИКА
+// НЕМЕЦИЯ — ОСНОВНАЯ ЛОГИКА (с облачной синхронизацией)
 // ============================================
 (function() {
 'use strict';
@@ -42,6 +42,51 @@ function debounce(fn, ms) {
     };
 }
 
+// --- CLOUD SYNC (Google Sheets) ---
+function cloudSend(payload) {
+    if (!CONFIG.cloudUrl) return Promise.resolve(false);
+    return fetch(CONFIG.cloudUrl, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+    }).then(function(r) { return r.json(); })
+      .then(function(j) { return !!(j && j.ok); })
+      .catch(function() { return false; });
+}
+
+function readLocalQueue() {
+    try { return JSON.parse(localStorage.getItem('nemesia_vinQueue') || '[]'); } catch(e) { return []; }
+}
+
+function saveLocalQueue(q) {
+    localStorage.setItem('nemesia_vinQueue', JSON.stringify(q));
+}
+
+function flushLocalQueue() {
+    if (!CONFIG.cloudUrl) return Promise.resolve(false);
+    const q = readLocalQueue();
+    if (q.length === 0) return Promise.resolve(false);
+    const tasks = q.map(function(item) {
+        return cloudSend({
+            action: 'addRequest',
+            type: item.type,
+            description: item.description,
+            vin: item.vin,
+            comment: item.comment,
+            date: item.date,
+            manager: item.manager
+        }).then(function(ok) { return { id: item.id, ok: ok }; });
+    });
+    return Promise.all(tasks).then(function(results) {
+        const sentIds = results.filter(function(r) { return r.ok; }).map(function(r) { return r.id; });
+        if (sentIds.length === 0) return false;
+        const left = readLocalQueue().filter(function(it) { return sentIds.indexOf(it.id) === -1; });
+        saveLocalQueue(left);
+        return true;
+    });
+}
+
+// --- ADD OPTIONS / MODAL ---
 function addAddOption(selectId, labelText) {
     const sel = $(selectId);
     if (!sel) return;
@@ -179,6 +224,10 @@ function init() {
         const errors = validateWorks(volkswagenDB, 'Volkswagen');
         if (errors.length > 0) console.warn('Validation errors:', errors);
     }
+
+    // Досылаем заявки, которые не ушли раньше (были без сети)
+    window.addEventListener('online', function() { flushLocalQueue(); });
+    flushLocalQueue();
 }
 
 function onBrandChange() {
@@ -732,6 +781,25 @@ function saveCalculation() {
 
     renderHistory();
     showToast('Расчёт сохранён');
+
+    // Отправляем расчёт в журнал Google Таблицы
+    if (CONFIG.cloudUrl) {
+        cloudSend({
+            action: 'addCalc',
+            date: record.date,
+            manager: record.manager,
+            carLabel: record.carLabel,
+            worksCount: record.worksCount,
+            total: record.total,
+            worksList: selectedWorks.map(function(sw) { return sw.name + ' (' + sw.nh + ' н/ч)'; }).join('; '),
+            coeffs: selectedWorks.filter(function(sw) { return sw.coefficients.length > 0; })
+                .map(function(sw) {
+                    return sw.name + ': ' + sw.coefficients.map(function(c) {
+                        return CONFIG.coefficients[c.type].label + ' +' + c.percent + '%';
+                    }).join(', ');
+                }).join('; ')
+        });
+    }
 }
 
 function showRestoreToast(data) {
@@ -850,35 +918,45 @@ function submitVin() {
         return;
     }
 
-    let queue = [];
-    try { queue = JSON.parse(localStorage.getItem('nemesia_vinQueue') || '[]'); } catch(e) {}
-
     const mgrSel = $('managerSelect');
     const mgrName = mgrSel ? CONFIG.managers.find(function(m) { return m.id === mgrSel.value; }) : null;
 
-    queue.push({
+    const item = {
+        id: Date.now(),
         type: addType,
         description: description,
         vin: vin,
         comment: comment,
         date: new Date().toISOString(),
         manager: mgrName ? mgrName.name : '—'
-    });
-    localStorage.setItem('nemesia_vinQueue', JSON.stringify(queue));
+    };
+
+    const q = readLocalQueue();
+    q.push(item);
+    saveLocalQueue(q);
 
     closeAddModal();
     if ($('vinInput')) $('vinInput').value = '';
     if ($('vinComment')) $('vinComment').value = '';
     if ($('addDescription')) $('addDescription').value = '';
-    showToast('Запрос добавлен в очередь');
+
+    if (CONFIG.cloudUrl) {
+        showToast('Отправляем запрос...');
+        flushLocalQueue().then(function(sent) {
+            const left = readLocalQueue();
+            if (left.length === 0) showToast('Запрос отправлен в общую очередь');
+            else showToast('Нет связи: запрос сохранён и уйдёт позже');
+        });
+    } else {
+        showToast('Запрос добавлен в очередь (облако не подключено)');
+    }
     renderVinQueue();
 }
 
 function renderVinQueue() {
     const container = $('vinQueueList');
     if (!container) return;
-    let queue = [];
-    try { queue = JSON.parse(localStorage.getItem('nemesia_vinQueue') || '[]'); } catch(e) {}
+    let queue = readLocalQueue();
 
     if (queue.length === 0) {
         container.innerHTML = '<div class="queue-empty">Очередь пуста</div>';
@@ -899,8 +977,9 @@ function renderVinQueue() {
     container.querySelectorAll('.queue-remove').forEach(function(btn) {
         btn.onclick = function() {
             const idx = parseInt(btn.dataset.index);
-            queue.splice(idx, 1);
-            localStorage.setItem('nemesia_vinQueue', JSON.stringify(queue));
+            const q = readLocalQueue();
+            q.splice(idx, 1);
+            saveLocalQueue(q);
             renderVinQueue();
         };
     });

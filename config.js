@@ -2,6 +2,7 @@
 // КОНФИГУРАЦИЯ СИСТЕМЫ
 // ============================================
 const CONFIG = {
+    cloudUrl: 'https://script.google.com/macros/s/AKfycbxplPCM6GQDSTtZTz8LQn0qjPTPe7ElAbQbuB5sIxA0rkADtTgHTRPPwnooICmyj1C7/exec', // <-- СЮДА вставь ссылку веб-приложения Apps Script (заканчивается на /exec)
     rates: {
         engine: 3000,
         standard: 2500

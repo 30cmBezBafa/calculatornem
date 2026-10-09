@@ -1,5 +1,5 @@
 // ============================================
-// НЕМЕЦИЯ — АДМИНКА ЛОГИКА
+// НЕМЕЦИЯ — АДМИНКА ЛОГИКА (очередь из облака)
 // ============================================
 (function() {
 'use strict';
@@ -11,6 +11,21 @@ const el = function(tag, cls, html) {
     if (html !== undefined) e.innerHTML = html;
     return e;
 };
+
+function cloudSend(payload) {
+    if (!CONFIG.cloudUrl) return Promise.resolve(false);
+    return fetch(CONFIG.cloudUrl, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+    }).then(function(r) { return r.json(); })
+      .then(function(j) { return !!(j && j.ok); })
+      .catch(function() { return false; });
+}
+
+function readLocalQueue() {
+    try { return JSON.parse(localStorage.getItem('nemesia_vinQueue') || '[]'); } catch(e) { return []; }
+}
 
 function init() {
     const savedTheme = localStorage.getItem('nemesia_theme') || 'light';
@@ -38,6 +53,7 @@ function init() {
 
     renderVinQueue();
     if ($('exportVinBtn')) $('exportVinBtn').onclick = exportVinQueue;
+    if (CONFIG.cloudUrl) setInterval(renderVinQueue, 30000);
 
     initModForm();
 }
@@ -85,51 +101,101 @@ function addManager() {
     showToast('Менеджер добавлен');
 }
 
+// --- VIN QUEUE (облако + локальные остатки) ---
 function renderVinQueue() {
     const container = $('vinQueueList');
     if (!container) return;
-    let queue = [];
-    try {
-        queue = JSON.parse(localStorage.getItem('nemesia_vinQueue') || '[]');
-    } catch(e) {}
+    const local = readLocalQueue();
 
-    if (queue.length === 0) {
-        container.innerHTML = '<div class="queue-empty">Очередь запросов пуста</div>';
+    if (!CONFIG.cloudUrl) {
+        drawQueue(container, [], local, false);
         return;
     }
 
-    container.innerHTML = queue.map(function(item, i) {
-        return '<div class="queue-item">' +
-            '<div class="queue-header">' +
-                '<span class="queue-type-badge">' + (item.type || 'Запрос') + '</span>' +
-                '<span class="queue-date">' + new Date(item.date).toLocaleString('ru-RU', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'}) + '</span>' +
-            '</div>' +
+    container.innerHTML = '<div class="queue-empty">Загружаем из облака...</div>';
+    fetch(CONFIG.cloudUrl + '?action=getRequests')
+        .then(function(r) { return r.json(); })
+        .then(function(j) {
+            drawQueue(container, (j && j.ok && j.items) ? j.items : [], local, false);
+        })
+        .catch(function() {
+            drawQueue(container, [], local, true);
+        });
+}
+
+function drawQueue(container, cloudItems, localItems, cloudError) {
+    let banner = '';
+    if (cloudError) banner = '<div class="queue-empty">Облако недоступно — показаны локальные заявки</div>';
+
+    let bodyHtml = '';
+
+    localItems.forEach(function(item, i) {
+        bodyHtml += '<div class="queue-item">' +
+            '<div class="queue-header"><span class="queue-type-badge" style="background:#c44;color:#fff">ждёт отправки</span>' +
+            '<span class="queue-date">' + new Date(item.date).toLocaleString('ru-RU', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'}) + '</span></div>' +
+            (item.description ? '<div class="queue-desc"><strong>Описание:</strong> ' + item.description + '</div>' : '') +
+            (item.vin ? '<div class="queue-vin"><strong>VIN:</strong> ' + item.vin + '</div>' : '') +
+            '<div class="queue-manager">Менеджер: ' + (item.manager || '—') + '</div>' +
+            '<button class="queue-remove" data-local="' + i + '" title="Удалить">×</button>' +
+            '</div>';
+    });
+
+    cloudItems.forEach(function(item) {
+        bodyHtml += '<div class="queue-item">' +
+            '<div class="queue-header"><span class="queue-type-badge">' + (item.type || 'Запрос') + '</span>' +
+            '<span class="queue-date">' + item.date + '</span></div>' +
             (item.description ? '<div class="queue-desc"><strong>Описание:</strong> ' + item.description + '</div>' : '') +
             (item.vin ? '<div class="queue-vin"><strong>VIN:</strong> ' + item.vin + '</div>' : '') +
             (item.comment ? '<div class="queue-comment"><strong>Комментарий:</strong> ' + item.comment + '</div>' : '') +
-            '<div class="queue-manager">Менеджер: ' + (item.manager || '—') + '</div>' +
-            '<button class="queue-remove" data-index="' + i + '" title="Удалить из очереди">×</button>' +
+            '<div class="queue-manager">Менеджер: ' + (item.manager || '—') + ' · Статус: ' + (item.status || '—') + '</div>' +
+            '<button class="queue-remove" data-row="' + item.row + '" title="Удалить из таблицы">×</button>' +
             '</div>';
-    }).join('');
+    });
 
-    container.querySelectorAll('.queue-remove').forEach(function(btn) {
+    if (bodyHtml === '') bodyHtml = '<div class="queue-empty">Очередь запросов пуста</div>';
+    container.innerHTML = banner + bodyHtml;
+
+    container.querySelectorAll('.queue-remove[data-local]').forEach(function(btn) {
         btn.onclick = function() {
-            const idx = parseInt(btn.dataset.index);
-            queue.splice(idx, 1);
-            localStorage.setItem('nemesia_vinQueue', JSON.stringify(queue));
+            const idx = parseInt(btn.dataset.local);
+            const q = readLocalQueue();
+            q.splice(idx, 1);
+            localStorage.setItem('nemesia_vinQueue', JSON.stringify(q));
             renderVinQueue();
-            showToast('Запрос удалён из очереди');
+            showToast('Локальная заявка удалена');
+        };
+    });
+
+    container.querySelectorAll('.queue-remove[data-row]').forEach(function(btn) {
+        btn.onclick = function() {
+            const row = parseInt(btn.dataset.row);
+            cloudSend({ action: 'deleteRequest', row: row }).then(function() {
+                renderVinQueue();
+                showToast('Заявка удалена из таблицы');
+            });
         };
     });
 }
 
 function exportVinQueue() {
-    let queue = [];
-    try {
-        queue = JSON.parse(localStorage.getItem('nemesia_vinQueue') || '[]');
-    } catch(e) {}
-    if (queue.length === 0) { showToast('Очередь пуста'); return; }
-    const blob = new Blob([JSON.stringify(queue, null, 2)], { type: 'application/json' });
+    if (CONFIG.cloudUrl) {
+        fetch(CONFIG.cloudUrl + '?action=getRequests')
+            .then(function(r) { return r.json(); })
+            .then(function(j) {
+                const cloud = (j && j.ok && j.items) ? j.items : [];
+                const local = readLocalQueue();
+                downloadJson({ cloud: cloud, localPending: local });
+            })
+            .catch(function() {
+                downloadJson(readLocalQueue());
+            });
+    } else {
+        downloadJson(readLocalQueue());
+    }
+}
+
+function downloadJson(data) {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = 'vin_queue.json';
@@ -137,6 +203,7 @@ function exportVinQueue() {
     URL.revokeObjectURL(a.href);
 }
 
+// --- ADD MODIFICATION ---
 function initModForm() {
     const brandSel = $('modBrand');
     if (!brandSel) return;
