@@ -4,196 +4,175 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Немеция — Админка</title>
+    <link rel="icon" href="logo.png">
     <link rel="stylesheet" href="style.css">
-    <style>
-        .admin-container { max-width: 800px; margin: 0 auto; padding: 20px; }
-        .admin-section {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: var(--shadow);
-        }
-        .admin-section h2 { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
-        .admin-section h3 { font-size: 14px; font-weight: 600; margin: 16px 0 8px; color: var(--text-muted); }
-        .admin-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 12px; }
-        .admin-table th { text-align: left; padding: 8px; border-bottom: 2px solid var(--border); font-weight: 600; }
-        .admin-table td { padding: 8px; border-bottom: 1px solid var(--border-light); }
-        .admin-input {
-            width: 100%;
-            padding: 8px 10px;
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            background: var(--bg-input);
-            color: var(--text);
-            font-size: 13px;
-            outline: none;
-        }
-        .admin-input:focus { border-color: var(--accent); }
-        .admin-row { display: flex; gap: 12px; margin-bottom: 12px; align-items: flex-end; }
-        .admin-row .admin-group { flex: 1; }
-        .admin-row .admin-group label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
-        .admin-btn {
-            padding: 8px 20px;
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            background: var(--bg-card);
-            color: var(--text);
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 600;
-            transition: background 0.15s;
-        }
-        .admin-btn:hover { background: var(--bg-hover); }
-        .admin-btn.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
-        .admin-btn.primary:hover { background: var(--accent-hover); }
-        .admin-btn.danger { color: #c44; }
-        .admin-btn.danger:hover { background: rgba(200,60,60,0.1); }
-        .admin-btn.small { padding: 4px 10px; font-size: 12px; }
-        .vin-queue-item {
-            background: var(--bg);
-            border: 1px solid var(--border-light);
-            border-radius: var(--radius);
-            padding: 12px;
-            margin-bottom: 8px;
-        }
-        .vin-queue-item .vin-line { font-weight: 600; font-size: 14px; }
-        .vin-queue-item .vin-comment { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
-        .vin-queue-item .vin-meta { font-size: 11px; color: var(--text-light); margin-top: 4px; }
-        .mod-form-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: flex-end; }
-        .mod-form-row .mod-group { flex: 1; }
-        .mod-form-row .mod-group label { display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 2px; }
-        .rate-select { padding: 4px 8px; border: 1px solid var(--border); border-radius: 3px; background: var(--bg-input); color: var(--text); font-size: 12px; }
-    </style>
 </head>
 <body>
-    <div class="header">
-        <div class="header-logo">НЕМЕЦИЯ <span> админка</span></div>
+    <header class="header">
+        <div class="header-logo">
+            <img src="logo.png" alt="" class="logo-img" onload="this.classList.add('ok')" onerror="this.style.display='none'">
+            <span class="logo-badge">N</span>
+            НЕМЕЦИЯ
+            <span class="logo-sub">админка</span>
+        </div>
         <div class="header-spacer"></div>
-        <label class="theme-toggle">
+        <label class="theme-toggle" title="Переключить тему">
             <span>🌙</span>
             <input type="checkbox" id="themeToggle">
             <span class="slider"></span>
             <span>☀️</span>
         </label>
-        <a href="index.html" class="header-btn">← К калькулятору</a>
-    </div>
+        <a href="index.html" class="header-btn">🧮 Калькулятор</a>
+    </header>
 
-    <div class="admin-container">
-        <!-- RATES -->
-        <div class="admin-section">
-            <h2>Ставки нормо-часов</h2>
+    <div class="admin-wrap">
+        <div class="admin-card">
+            <h2><span class="sec-icon">💵</span> Ставки нормо-часа</h2>
             <div class="admin-row">
-                <div class="admin-group">
-                    <label>ДВС / КПП (₽/н/ч)</label>
-                    <input type="number" class="admin-input" id="rateEngine" value="3000">
+                <div class="admin-field">
+                    <label>ДВС / КПП (₽)</label>
+                    <input type="number" id="rateEngine" class="admin-input" placeholder="3000">
                 </div>
-                <div class="admin-group">
-                    <label>Остальные работы (₽/н/ч)</label>
-                    <input type="number" class="admin-input" id="rateStandard" value="2500">
+                <div class="admin-field">
+                    <label>Остальные работы (₽)</label>
+                    <input type="number" id="rateStandard" class="admin-input" placeholder="2500">
                 </div>
-            </div>
-            <button class="admin-btn primary" id="saveRatesBtn">Сохранить ставки</button>
-        </div>
-
-        <!-- COEFFICIENTS -->
-        <div class="admin-section">
-            <h2>Усложняющие коэффициенты</h2>
-            <table class="admin-table">
-                <thead><tr><th>Название</th><th>Процент (%)</th></tr></thead>
-                <tbody>
-                    <tr><td>Прикипевшие/ржавые болты</td><td><input type="number" class="admin-input" id="coeffRusty" value="15" style="width:80px"></td></tr>
-                    <tr><td>Алюминиевые детали</td><td><input type="number" class="admin-input" id="coeffAluminum" value="20" style="width:80px"></td></tr>
-                    <tr><td>Установлено ГБО</td><td><input type="number" class="admin-input" id="coeffLpg" value="10" style="width:80px"></td></tr>
-                </tbody>
-            </table>
-            <button class="admin-btn primary" id="saveCoeffsBtn">Сохранить коэффициенты</button>
-        </div>
-
-        <!-- MANAGERS -->
-        <div class="admin-section">
-            <h2>Менеджеры</h2>
-            <table class="admin-table">
-                <thead><tr><th>Имя</th><th></th></tr></thead>
-                <tbody id="managersTable"></tbody>
-            </table>
-            <div class="admin-row">
-                <div class="admin-group">
-                    <label>Имя нового менеджера</label>
-                    <input type="text" class="admin-input" id="newManagerName" placeholder="Введите имя">
+                <div class="admin-field" style="flex:0 0 auto;display:flex;align-items:flex-end;">
+                    <button id="saveRatesBtn" class="admin-btn primary">💾 Сохранить ставки</button>
                 </div>
-                <button class="admin-btn primary" id="addManagerBtn">Добавить</button>
             </div>
         </div>
 
-        <!-- VIN QUEUE -->
-        <div class="admin-section">
-            <h2>Очередь VIN на добавление</h2>
-            <div id="vinQueueList"><p style="color:var(--text-muted)">Очередь пуста</p></div>
-            <button class="admin-btn" id="exportVinBtn" style="margin-top:12px">Экспортировать в файл</button>
+        <div class="admin-card">
+            <h2><span class="sec-icon">📐</span> Коэффициенты (%)</h2>
+            <div class="admin-row">
+                <div class="admin-field">
+                    <label>Прикипевшие / ржавые болты</label>
+                    <input type="number" id="coeffRusty" class="admin-input" placeholder="15">
+                </div>
+                <div class="admin-field">
+                    <label>Алюминиевые детали</label>
+                    <input type="number" id="coeffAluminum" class="admin-input" placeholder="20">
+                </div>
+                <div class="admin-field">
+                    <label>Установлено ГБО</label>
+                    <input type="number" id="coeffLpg" class="admin-input" placeholder="10">
+                </div>
+                <div class="admin-field" style="flex:0 0 auto;display:flex;align-items:flex-end;">
+                    <button id="saveCoeffsBtn" class="admin-btn primary">💾 Сохранить</button>
+                </div>
+            </div>
         </div>
 
-        <!-- ADD MODIFICATION -->
-        <div class="admin-section">
-            <h2>Добавить модификацию</h2>
-            <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;">
-                Заполните все поля. После сохранения будет скачан файл с обновлённой базой — замените им старый файл.
-            </p>
-            <div id="modFormContainer">
-                <h3>Автомобиль</h3>
-                <div class="mod-form-row">
-                    <div class="mod-group"><label>Марка</label><select class="admin-input" id="modBrand"></select></div>
-                    <div class="mod-group"><label>Модель</label><input type="text" class="admin-input" id="modModel"></div>
-                    <div class="mod-group"><label>Поколение</label><input type="text" class="admin-input" id="modGen"></div>
+        <div class="admin-card">
+            <h2><span class="sec-icon">👥</span> Менеджеры</h2>
+            <table class="admin-table"><tbody id="managersTable"></tbody></table>
+            <div class="admin-row" style="margin-top:10px;">
+                <div class="admin-field">
+                    <label>Новый менеджер</label>
+                    <input type="text" id="newManagerName" class="admin-input" placeholder="Например: Алексей">
                 </div>
-                <div class="mod-form-row">
-                    <div class="mod-group"><label>Код ДВС</label><input type="text" class="admin-input" id="modEngineCode"></div>
-                    <div class="mod-group"><label>Объём</label><input type="text" class="admin-input" id="modEngineVol" placeholder="1.4 L"></div>
-                    <div class="mod-group"><label>Мощность</label><input type="text" class="admin-input" id="modEnginePower" placeholder="122 л.с."></div>
-                    <div class="mod-group"><label>Крутящий момент</label><input type="text" class="admin-input" id="modEngineTorque" placeholder="200 Нм"></div>
+                <div class="admin-field" style="flex:0 0 auto;display:flex;align-items:flex-end;">
+                    <button id="addManagerBtn" class="admin-btn primary">➕ Добавить</button>
                 </div>
-                <div class="mod-form-row">
-                    <div class="mod-group"><label>Код КПП</label><input type="text" class="admin-input" id="modGbCode"></div>
-                    <div class="mod-group"><label>Тип КПП</label><input type="text" class="admin-input" id="modGbType" placeholder="DSG (робот)"></div>
-                    <div class="mod-group"><label>Передачи</label><input type="number" class="admin-input" id="modGbGears" placeholder="6"></div>
-                    <div class="mod-group"><label>Привод</label><select class="admin-input" id="modDrive"><option>Передний</option><option>Задний</option><option>Полный (4Motion)</option><option>Полный (Quattro)</option><option>Полный (xDrive)</option></select></div>
-                </div>
+            </div>
+        </div>
 
-                <h3>Заправочные объёмы</h3>
-                <div class="mod-form-row">
-                    <div class="mod-group"><label>Моторное масло — объём</label><input type="text" class="admin-input" id="flOilVol" placeholder="4.0 л"></div>
-                    <div class="mod-group"><label>Допуск</label><input type="text" class="admin-input" id="flOilSpec" placeholder="VW 502.00"></div>
-                    <div class="mod-group"><label>Вязкость</label><input type="text" class="admin-input" id="flOilVisc" placeholder="5W-30"></div>
-                </div>
-                <div class="mod-form-row">
-                    <div class="mod-group"><label>Масло КПП — объём</label><input type="text" class="admin-input" id="flGbVol"></div>
-                    <div class="mod-group"><label>Допуск</label><input type="text" class="admin-input" id="flGbSpec"></div>
-                </div>
-                <div class="mod-form-row">
-                    <div class="mod-group"><label>Раздатка — объём (или пусто)</label><input type="text" class="admin-input" id="flTfVol"></div>
-                    <div class="mod-group"><label>Допуск</label><input type="text" class="admin-input" id="flTfSpec"></div>
-                    <div class="mod-group"><label>Редуктор пер. — объём</label><input type="text" class="admin-input" id="flDfVol"></div>
-                    <div class="mod-group"><label>Редуктор зад. — объём</label><input type="text" class="admin-input" id="flDrVol"></div>
-                </div>
-                <div class="mod-form-row">
-                    <div class="mod-group"><label>Антифриз — объём</label><input type="text" class="admin-input" id="flCoolVol"></div>
-                    <div class="mod-group"><label>Тип</label><input type="text" class="admin-input" id="flCoolSpec" placeholder="G12evo"></div>
-                    <div class="mod-group"><label>Тормозная жидкость</label><input type="text" class="admin-input" id="flBrSpec" placeholder="DOT 4"></div>
-                </div>
-                <div class="mod-form-row">
-                    <div class="mod-group"><label>ГУР — объём/тип</label><input type="text" class="admin-input" id="flPsVol" placeholder="ЭУР — не обслуживается"></div>
-                    <div class="mod-group"><label>Хладагент (г)</label><input type="text" class="admin-input" id="flAcVol" placeholder="525 г"></div>
-                    <div class="mod-group"><label>Тип хладагента</label><input type="text" class="admin-input" id="flAcSpec" placeholder="R134a"></div>
-                </div>
+        <div class="admin-card">
+            <h2><span class="sec-icon">📨</span> Очередь заявок на добавление</h2>
+            <div id="vinQueueList"></div>
+            <div class="admin-row" style="margin-top:10px;">
+                <button id="exportVinBtn" class="admin-btn">️ Экспорт очереди (JSON)</button>
+            </div>
+        </div>
 
-                <h3>Нормо-часы по работам</h3>
-                <p style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">Введите нормо-часы для применимых работ. Пустое поле = работа не применима к этой модификации.</p>
-                <div id="modWorksList"></div>
-
-                <div style="margin-top:16px;">
-                    <button class="admin-btn primary" id="saveModBtn">Создать модификацию</button>
+        <div class="admin-card">
+            <h2><span class="sec-icon">🚗</span> Добавить модификацию в базу</h2>
+            <div class="admin-row">
+                <div class="admin-field">
+                    <label>Марка</label>
+                    <select id="modBrand" class="rate-select"></select>
                 </div>
+                <div class="admin-field">
+                    <label>Модель</label>
+                    <input type="text" id="modModel" class="admin-input" placeholder="Например: Golf">
+                </div>
+                <div class="admin-field">
+                    <label>Поколение</label>
+                    <input type="text" id="modGen" class="admin-input" placeholder="Например: VII (2012–2020)">
+                </div>
+            </div>
+            <div class="admin-row" style="margin-top:10px;">
+                <div class="admin-field">
+                    <label>Код двигателя</label>
+                    <input type="text" id="modEngineCode" class="admin-input" placeholder="Например: CZDA">
+                </div>
+                <div class="admin-field">
+                    <label>Объём</label>
+                    <input type="text" id="modEngineVol" class="admin-input" placeholder="Например: 1.4 L">
+                </div>
+                <div class="admin-field">
+                    <label>Мощность</label>
+                    <input type="text" id="modEnginePower" class="admin-input" placeholder="Например: 122 л.с.">
+                </div>
+                <div class="admin-field">
+                    <label>Момент</label>
+                    <input type="text" id="modEngineTorque" class="admin-input" placeholder="Например: 200 Нм">
+                </div>
+            </div>
+            <div class="admin-row" style="margin-top:10px;">
+                <div class="admin-field">
+                    <label>Код КПП</label>
+                    <input type="text" id="modGbCode" class="admin-input" placeholder="Например: DQ250">
+                </div>
+                <div class="admin-field">
+                    <label>Тип КПП</label>
+                    <input type="text" id="modGbType" class="admin-input" placeholder="Например: DSG (робот)">
+                </div>
+                <div class="admin-field">
+                    <label>Передач</label>
+                    <input type="number" id="modGbGears" class="admin-input" placeholder="Например: 6">
+                </div>
+                <div class="admin-field">
+                    <label>Привод</label>
+                    <select id="modDrive" class="rate-select">
+                        <option value="Передний">Передний</option>
+                        <option value="Полный (4Motion)">Полный (4Motion)</option>
+                        <option value="Задний">Задний</option>
+                    </select>
+                </div>
+            </div>
+
+            <h2 style="margin-top:18px;"><span class="sec-icon">🧪</span> Жидкости (необязательно)</h2>
+            <div class="admin-row">
+                <div class="admin-field"><label>Масло ДВС: объём</label><input type="text" id="flOilVol" class="admin-input" placeholder="4.0 л"></div>
+                <div class="admin-field"><label>Масло ДВС: допуск</label><input type="text" id="flOilSpec" class="admin-input" placeholder="VW 502.00 / 504.00"></div>
+                <div class="admin-field"><label>Масло ДВС: вязкость</label><input type="text" id="flOilVisc" class="admin-input" placeholder="5W-30"></div>
+            </div>
+            <div class="admin-row" style="margin-top:8px;">
+                <div class="admin-field"><label>Масло КПП: объём</label><input type="text" id="flGbVol" class="admin-input" placeholder="1.7 л"></div>
+                <div class="admin-field"><label>Масло КПП: допуск</label><input type="text" id="flGbSpec" class="admin-input" placeholder="VW G 052 182"></div>
+                <div class="admin-field"><label>Раздатка: объём</label><input type="text" id="flTfVol" class="admin-input" placeholder="0.9 л (если есть)"></div>
+                <div class="admin-field"><label>Раздатка: допуск</label><input type="text" id="flTfSpec" class="admin-input" placeholder="VW G 055 145"></div>
+            </div>
+            <div class="admin-row" style="margin-top:8px;">
+                <div class="admin-field"><label>Передний редуктор: объём</label><input type="text" id="flDfVol" class="admin-input" placeholder="0.8 л (если есть)"></div>
+                <div class="admin-field"><label>Задний редуктор: объём</label><input type="text" id="flDrVol" class="admin-input" placeholder="0.8 л (если есть)"></div>
+                <div class="admin-field"><label>Антифриз: объём</label><input type="text" id="flCoolVol" class="admin-input" placeholder="7.0 л"></div>
+                <div class="admin-field"><label>Антифриз: допуск</label><input type="text" id="flCoolSpec" class="admin-input" placeholder="G12evo"></div>
+            </div>
+            <div class="admin-row" style="margin-top:8px;">
+                <div class="admin-field"><label>Тормозная жидкость: допуск</label><input type="text" id="flBrSpec" class="admin-input" placeholder="DOT 4"></div>
+                <div class="admin-field"><label>ГУР: объём (или «ЭУР»)</label><input type="text" id="flPsVol" class="admin-input" placeholder="ЭУР — не обслуживается"></div>
+                <div class="admin-field"><label>Хладагент: объём</label><input type="text" id="flAcVol" class="admin-input" placeholder="525 г"></div>
+                <div class="admin-field"><label>Хладагент: тип</label><input type="text" id="flAcSpec" class="admin-input" placeholder="R134a"></div>
+            </div>
+
+            <h2 style="margin-top:18px;"><span class="sec-icon">🛠️</span> Работы и нормо-часы</h2>
+            <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">Впиши нормо-часы напротив работы — она попадёт в модификацию. Пустые поля игнорируются.</p>
+            <div id="modWorksList"></div>
+            <div class="admin-row" style="margin-top:14px;">
+                <button id="saveModBtn" class="admin-btn primary">💾 Скачать обновлённый файл базы</button>
             </div>
         </div>
     </div>
