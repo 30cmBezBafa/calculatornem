@@ -65,17 +65,18 @@ const worksCatalog = {
     remove_drives:       { cat: 'engine_big', name: 'Снятие приводов',                      rateType: 'standard', nh: 1.0 },
     separate_gearbox:    { cat: 'engine_big', name: 'Отделение КПП от ДВС',                  rateType: 'standard', nh: 1.5 },
 
-    // === КПП ===
+        // === КПП ===
     gearbox_remove_install: {
         cat: 'gearbox', name: 'КПП — Снятие/Установка',
         rateType: 'engine', nh: 8.0,
         includes: ['remove_drives']
     },
-    gearbox_oil_change:  { cat: 'gearbox', name: 'Замена масла КПП',                        rateType: 'standard', nh: 0.5 },
-    mechatronic:         { cat: 'gearbox', name: 'Замена мехатроника',                      rateType: 'engine',   nh: 6.0 },
-    clutch_replacement:  { cat: 'gearbox', name: 'Замена сцепления (DSG/робот)',            rateType: 'engine',   nh: 5.0 },
-    dual_mass_flywheel:  { cat: 'gearbox', name: 'Замена двухмассового маховика',           rateType: 'engine',   nh: 5.5 },
-    gearbox_repair:     { cat: 'gearbox', name: 'Ремонт КПП (без снятия)',                 rateType: 'engine',   nh: 8.0 },
+    gearbox_oil_change:  { cat: 'gearbox', name: 'Замена масла КПП', rateType: 'standard', nh: 0.5, gearboxType: ['manual', 'dsg', 'automatic'] },
+    mechatronic:         { cat: 'gearbox', name: 'Замена мехатроника', rateType: 'engine', nh: 6.0, gearboxType: ['dsg'] },
+    clutch_replacement:  { cat: 'gearbox', name: 'Замена сцепления (DSG/робот)', rateType: 'engine', nh: 5.0, gearboxType: ['dsg'] },
+    clutch_replacement_manual: { cat: 'gearbox', name: 'Замена сцепления (МКПП)', rateType: 'engine', nh: 4.0, gearboxType: ['manual'] },
+    dual_mass_flywheel:  { cat: 'gearbox', name: 'Замена двухмассового маховика', rateType: 'engine', nh: 5.5, gearboxType: ['dsg', 'manual'] },
+    gearbox_repair:      { cat: 'gearbox', name: 'Ремонт КПП (без снятия)', rateType: 'engine', nh: 8.0 },
 
     // === ПОЛНЫЙ ПРИВОД ===
     transfer_case_oil:   { cat: 'awd', name: 'Замена масла раздатки',                      rateType: 'standard', nh: 0.4 },
@@ -86,12 +87,15 @@ const worksCatalog = {
     transfer_case_remove: { cat: 'awd', name: 'Снятие/Установка раздатки',                 rateType: 'engine',   nh: 4.0 },
 
     // === ПОДВЕСКА ===
-    shock_absorbers:     { cat: 'suspension', name: 'Замена амортизаторов (пара)',          rateType: 'standard', nh: 1.5 },
-    springs:            { cat: 'suspension', name: 'Замена пружин (пара)',                 rateType: 'standard', nh: 2.0 },
-    control_arm_bushings: { cat: 'suspension', name: 'Замена сайлентблоков рычагов',       rateType: 'standard', nh: 2.0 },
-    ball_joints:        { cat: 'suspension', name: 'Замена шаровых опор',                 rateType: 'standard', nh: 1.5 },
-    sway_bar_links:     { cat: 'suspension', name: 'Замена стоек стабилизатора',           rateType: 'standard', nh: 0.5 },
-    wheel_bearings:     { cat: 'suspension', name: 'Замена ступичных подшипников',        rateType: 'standard', nh: 1.5 },
+    shock_absorbers_front:      { cat: 'suspension', name: 'Замена передних амортизаторов (пара)', rateType: 'standard', nh: 1.5 },
+    shock_absorbers_rear:       { cat: 'suspension', name: 'Замена задних амортизаторов (пара)', rateType: 'standard', nh: 1.8 },
+    shock_absorbers_front_air:  { cat: 'suspension', name: 'Замена передних пневмоамортизаторов (пара)', rateType: 'standard', nh: 2.5 },
+    shock_absorbers_rear_air:   { cat: 'suspension', name: 'Замена задних пневмоамортизаторов (пара)', rateType: 'standard', nh: 2.8 },
+    springs:                    { cat: 'suspension', name: 'Замена пружин (пара)', rateType: 'standard', nh: 2.0 },
+    control_arm_bushings:       { cat: 'suspension', name: 'Замена сайлентблоков рычагов', rateType: 'standard', nh: 2.0 },
+    ball_joints:                { cat: 'suspension', name: 'Замена шаровых опор', rateType: 'standard', nh: 1.5 },
+    sway_bar_links:             { cat: 'suspension', name: 'Замена стоек стабилизатора (пара)', rateType: 'standard', nh: 0.6 },
+    wheel_bearings:             { cat: 'suspension', name: 'Замена ступичных подшипников (пара)', rateType: 'standard', nh: 2.0 },
 
     // === ТОРМОЗА ===
     brake_pads_front:    { cat: 'brakes', name: 'Замена тормозных колодок (перед)',        rateType: 'standard', nh: 0.5 },
