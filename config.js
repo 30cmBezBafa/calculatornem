@@ -19,16 +19,16 @@ const CONFIG = {
         { id: 'm3', name: 'Шпехт В.В.', passHash: '' },
         { id: 'm4', name: 'Ванжа М.С.', passHash: '' }
     ],
-    brands: [
-        { id: 'volkswagen', name: 'Volkswagen',    file: 'volkswagen.js', varName: 'volkswagenDB' },
-        { id: 'audi',       name: 'Audi',          file: 'audi.js',       varName: 'audiDB' },
-        { id: 'skoda',      name: 'Skoda',         file: 'skoda.js',      varName: 'skodaDB' },
-        { id: 'seat',       name: 'SEAT',          file: 'seat.js',       varName: 'seatDB' },
-        { id: 'porsche',    name: 'Porsche',       file: 'porsche.js',    varName: 'porscheDB' },
-        { id: 'bmw',        name: 'BMW',           file: 'bmw.js',        varName: 'bmwDB' },
-        { id: 'mini',       name: 'MINI',          file: 'mini.js',       varName: 'miniDB' },
-        { id: 'alpina',     name: 'ALPINA',        file: 'alpina.js',     varName: 'alpinaDB' },
-        { id: 'mercedes',   name: 'Mercedes-Benz', file: 'mercedes.js',   varName: 'mercedesDB' }
+        brands: [
+        { id: 'volkswagen', name: 'Volkswagen',    file: 'brands/volkswagen.js', varName: 'volkswagenDB' },
+        { id: 'audi',       name: 'Audi',          file: 'brands/audi.js',       varName: 'audiDB' },
+        { id: 'skoda',      name: 'Skoda',         file: 'brands/skoda.js',      varName: 'skodaDB' },
+        { id: 'seat',       name: 'SEAT',          file: 'brands/seat.js',       varName: 'seatDB' },
+        { id: 'porsche',    name: 'Porsche',       file: 'brands/porsche.js',    varName: 'porscheDB' },
+        { id: 'bmw',        name: 'BMW',           file: 'brands/bmw.js',        varName: 'bmwDB' },
+        { id: 'mini',       name: 'MINI',          file: 'brands/mini.js',       varName: 'miniDB' },
+        { id: 'alpina',     name: 'ALPINA',        file: 'brands/alpina.js',     varName: 'alpinaDB' },
+        { id: 'mercedes',   name: 'Mercedes-Benz', file: 'brands/mercedes.js',   varName: 'mercedesDB' }
     ],
     // === СПРАВОЧНИКИ ДЛЯ СБОРКИ ПАСПОРТА ===
     refs: {
