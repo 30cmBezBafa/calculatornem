@@ -1,5 +1,5 @@
 // ============================================
-// НЕМЕЦИЯ — ОСНОВНАЯ ЛОГИКА (v9: дубли уехали в core.js)
+// НЕМЕЦИЯ — ОСНОВНАЯ ЛОГИКА (v10: константы марок уехали в core.js)
 // ============================================
 (function() {
 'use strict';
@@ -16,27 +16,7 @@ let searchResults = [];
 let journalItems = [];
 let historyItems = [];
 
-const ICON_FALLBACK = {
-    to: '🛢️', diag: '🔬', engine: '⚙️', engine_big: '🏗️', gearbox: '🔄', awd: '🧭',
-    suspension: '🌀', brakes: '🛑', steering: '🛞', electrics: '⚡', climate: '❄️', exhaust: '💨'
-};
-const AWD_FALLBACK = {
-    volkswagen: '4MOTION', audi: 'QUATTRO', skoda: '4x4', seat: '4Drive',
-    porsche: 'PTM', bmw: 'xDrive', mini: 'ALL4', alpina: 'xDrive', mercedes: '4MATIC'
-};
-// Исторические префиксы id модификаций
-const BRAND_PREFIX = { volkswagen: 'vw', mercedes: 'mb' };
-
-function catIcon(key) {
-    if (typeof CAT_ICONS !== 'undefined' && CAT_ICONS[key]) return CAT_ICONS[key];
-    return ICON_FALLBACK[key] || '';
-}
-
-function awdName(brandId) {
-    const map = (typeof AWD_NAMES !== 'undefined') ? AWD_NAMES : AWD_FALLBACK;
-    return map[brandId] || 'AWD';
-}
-
+// Определяет марку по id модификации (учитывает исторические префиксы из core.js)
 function modBrandId(modId) {
     for (let i = 0; i < CONFIG.brands.length; i++) {
         const b = CONFIG.brands[i];
