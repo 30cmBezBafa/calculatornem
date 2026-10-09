@@ -33,6 +33,7 @@ function el(tag, cls) {
 
 function showToast(msg) {
     const t = $('toast');
+    if (!t) return;
     t.textContent = msg;
     t.classList.add('show');
     setTimeout(() => t.classList.remove('show'), 2000);
@@ -77,9 +78,16 @@ function renderWorks(mod) {
         const catDiv = el('div', 'work-category');
         catDiv.dataset.cat = catKey;
 
+        // ИСПРАВЛЕНИЕ: объявляем body ДО того, как он используется в header.onclick
+        const body = el('div', 'work-category-body');
         const header = el('div', 'work-category-header');
         const isExpanded = expandedCats.has(catKey);
-        if (isExpanded) header.classList.add('expanded');
+        
+        if (isExpanded) {
+            header.classList.add('expanded');
+            body.classList.add('expanded');
+        }
+        
         header.innerHTML = `<span class="arrow">▶</span> ${categories[catKey]} <span class="count">${byCat[catKey].length}</span>`;
         header.onclick = () => {
             const expanded = header.classList.toggle('expanded');
@@ -87,9 +95,6 @@ function renderWorks(mod) {
             if (expanded) expandedCats.add(catKey);
             else expandedCats.delete(catKey);
         };
-
-        const body = el('div', 'work-category-body');
-        if (isExpanded) body.classList.add('expanded');
 
         byCat[catKey].forEach(wid => {
             const w = worksCatalog[wid];
@@ -117,6 +122,7 @@ function onWorksListClick(e) {
         const wid = expandBtn.dataset.workId;
         const item = expandBtn.closest('.work-item');
         item.classList.toggle('includes-expanded');
+        
         // Show/hide includes list
         let incList = item.nextElementSibling;
         if (incList && incList.classList.contains('includes-list')) {
@@ -124,7 +130,7 @@ function onWorksListClick(e) {
         } else {
             // Create it
             const w = worksCatalog[wid];
-            if (w.includes) {
+            if (w && w.includes) {
                 const list = el('div', 'includes-list');
                 w.includes.forEach(incId => {
                     const inc = worksCatalog[incId];
@@ -153,6 +159,7 @@ function toggleWork(workId, itemEl) {
     const w = worksCatalog[workId];
     if (!w) return;
     const idx = selectedWorks.findIndex(sw => sw.workId === workId);
+    
     if (idx >= 0) {
         // Remove from calc
         selectedWorks.splice(idx, 1);
@@ -163,6 +170,7 @@ function toggleWork(workId, itemEl) {
         const customNh = (currentMod && currentMod.customNh && currentMod.customNh[workId]) ? currentMod.customNh[workId] : null;
         const finalNh = customNh || w.nh;
         const price = workPrice(finalNh, w.rateType);
+        
         selectedWorks.push({
             workId: workId,
             nh: finalNh,
@@ -179,13 +187,14 @@ function toggleWork(workId, itemEl) {
 
 // --- CALC PANEL ---
 function renderCalc() {
-    const body = $('calcBody');
+    const calcBody = $('calcBody');
+    if (!calcBody) return;
+    
     if (selectedWorks.length === 0) {
-        body.innerHTML = '<div class="calc-empty">Выберите работы из списка слева</div>';
+        calcBody.innerHTML = '<div class="calc-empty">Выберите работы из списка слева</div>';
         return;
     }
 
-    // Render in order of addition
     let html = '';
     let totalWorks = 0;
     let totalCoeff = 0;
@@ -211,7 +220,6 @@ function renderCalc() {
         html += `<span class="calc-work-price">${formatRub(sw.price + coeffSum)}</span>`;
         html += `</div>`;
 
-        // Includes list in calc
         if (hasIncludes && isIncExpanded) {
             html += `<div class="includes-list expanded" style="padding:4px 0 4px 12px;">`;
             sw.includes.forEach(incId => {
@@ -224,14 +232,12 @@ function renderCalc() {
             html += `</div>`;
         }
 
-        // Coefficients
         html += `<div class="coeff-row" data-index="${i}">`;
         if (sw.coefficients.length > 0) {
             sw.coefficients.forEach((c, ci) => {
                 html += `<div class="coeff-display">${CONFIG.coefficients[c.type].label}: +${c.percent}% <span class="coeff-rub">(${formatRub(c.rub)})</span> <span class="coeff-remove" data-cindex="${ci}">убрать</span></div>`;
             });
         }
-        // Add coeff select
         html += `<select class="coeff-add" data-index="${i}"><option value="">+ Добавить коэффициент</option>`;
         Object.keys(CONFIG.coefficients).forEach(ck => {
             const already = sw.coefficients.some(c => c.type === ck);
@@ -239,9 +245,7 @@ function renderCalc() {
                 html += `<option value="${ck}">${CONFIG.coefficients[ck].label} (+${CONFIG.coefficients[ck].percent}%)</option>`;
             }
         });
-        html += `</select>`;
-        html += `</div>`;
-        html += `</div>`;
+        html += `</select></div></div>`;
 
         totalWorks += sw.price + coeffSum;
         totalCoeff += coeffSum;
@@ -255,10 +259,10 @@ function renderCalc() {
     html += `<div class="calc-total-row final"><span>Итого:</span><span>${formatRub(totalWorks)}</span></div>`;
     html += `</div>`;
 
-    body.innerHTML = html;
+    calcBody.innerHTML = html;
 
     // Attach handlers
-    body.querySelectorAll('.coeff-add').forEach(sel => {
+    calcBody.querySelectorAll('.coeff-add').forEach(sel => {
         sel.onchange = () => {
             const idx = parseInt(sel.dataset.index);
             const cType = sel.value;
@@ -271,7 +275,7 @@ function renderCalc() {
         };
     });
 
-    body.querySelectorAll('.coeff-remove').forEach(btn => {
+    calcBody.querySelectorAll('.coeff-remove').forEach(btn => {
         btn.onclick = () => {
             const idx = parseInt(btn.closest('.coeff-row').dataset.index);
             const ci = parseInt(btn.dataset.cindex);
@@ -280,11 +284,10 @@ function renderCalc() {
         };
     });
 
-    body.querySelectorAll('.calc-work-remove').forEach(btn => {
+    calcBody.querySelectorAll('.calc-work-remove').forEach(btn => {
         btn.onclick = () => {
             const idx = parseInt(btn.dataset.index);
             const sw = selectedWorks[idx];
-            // Deselect in list
             const listItems = $('worksList').querySelectorAll('.work-item');
             listItems.forEach(item => {
                 if (item.dataset.workId === sw.workId) item.classList.remove('selected');
@@ -295,7 +298,7 @@ function renderCalc() {
         };
     });
 
-    body.querySelectorAll('.expand-btn[data-calc-wid]').forEach(btn => {
+    calcBody.querySelectorAll('.expand-btn[data-calc-wid]').forEach(btn => {
         btn.onclick = () => {
             const wid = btn.dataset.calcWid;
             if (expandedIncludes.has(wid)) expandedIncludes.delete(wid);
@@ -305,16 +308,14 @@ function renderCalc() {
     });
 }
 
-// --- SAVE CALCULATION (with double-save protection) ---
+// --- SAVE CALCULATION ---
 function saveCalculation() {
-    if (isSaving) return;
-    if (selectedWorks.length === 0) return;
-    if (!currentMod) return;
+    if (isSaving || selectedWorks.length === 0 || !currentMod) return;
 
     isSaving = true;
     setTimeout(() => { isSaving = false; }, 1000);
 
-    const mgr = $('managerSelect').value;
+    const mgr = $('managerSelect')?.value;
     const mgrName = CONFIG.managers.find(m => m.id === mgr)?.name || '—';
 
     const total = selectedWorks.reduce((sum, sw) => {
@@ -337,16 +338,11 @@ function saveCalculation() {
         }))
     };
 
-    // Save to localStorage history (last 5)
     let history = [];
-    try {
-        history = JSON.parse(localStorage.getItem('nemesia_history') || '[]');
-    } catch(e) {}
+    try { history = JSON.parse(localStorage.getItem('nemesia_history') || '[]'); } catch(e) {}
     history.unshift(record);
     history = history.slice(0, 5);
     localStorage.setItem('nemesia_history', JSON.stringify(history));
-
-    // Save as last calc
     localStorage.setItem('nemesia_lastCalc', JSON.stringify(record));
 
     renderHistory();
@@ -358,9 +354,7 @@ function renderHistory() {
     const container = $('historyList');
     if (!container) return;
     let history = [];
-    try {
-        history = JSON.parse(localStorage.getItem('nemesia_history') || '[]');
-    } catch(e) {}
+    try { history = JSON.parse(localStorage.getItem('nemesia_history') || '[]'); } catch(e) {}
 
     if (history.length === 0) {
         container.innerHTML = '<div class="history-empty">История пуста</div>';
@@ -385,13 +379,10 @@ function renderHistory() {
 
 function loadHistoryItem(id) {
     let history = [];
-    try {
-        history = JSON.parse(localStorage.getItem('nemesia_history') || '[]');
-    } catch(e) {}
+    try { history = JSON.parse(localStorage.getItem('nemesia_history') || '[]'); } catch(e) {}
     const record = history.find(h => h.id === id);
     if (!record) return;
 
-    // Find the modification
     if (!currentBrandData) {
         showToast('Сначала выберите марку');
         return;
@@ -402,13 +393,11 @@ function loadHistoryItem(id) {
         return;
     }
 
-    // Select it
     currentMod = mod;
     selectedWorks = [];
     expandedCats.clear();
     expandedIncludes.clear();
 
-    // Restore works
     record.works.forEach(rw => {
         const w = worksCatalog[rw.workId];
         if (!w) return;
@@ -444,9 +433,9 @@ function closeVinModal() {
 }
 
 function submitVin() {
-    const vin = $('vinInput').value.trim();
-    const comment = $('vinComment').value.trim();
-    const mgr = $('managerSelect').value;
+    const vin = $('vinInput')?.value.trim();
+    const comment = $('vinComment')?.value.trim();
+    const mgr = $('managerSelect')?.value;
     const mgrName = CONFIG.managers.find(m => m.id === mgr)?.name || '—';
 
     if (!vin) {
@@ -454,11 +443,8 @@ function submitVin() {
         return;
     }
 
-    // Save to VIN queue
     let queue = [];
-    try {
-        queue = JSON.parse(localStorage.getItem('nemesia_vinQueue') || '[]');
-    } catch(e) {}
+    try { queue = JSON.parse(localStorage.getItem('nemesia_vinQueue') || '[]'); } catch(e) {}
     queue.unshift({ vin, comment, manager: mgrName, timestamp: Date.now() });
     localStorage.setItem('nemesia_vinQueue', JSON.stringify(queue));
 
@@ -471,9 +457,7 @@ function renderVinQueue() {
     const container = $('vinQueueList');
     if (!container) return;
     let queue = [];
-    try {
-        queue = JSON.parse(localStorage.getItem('nemesia_vinQueue') || '[]');
-    } catch(e) {}
+    try { queue = JSON.parse(localStorage.getItem('nemesia_vinQueue') || '[]'); } catch(e) {}
 
     if (queue.length === 0) {
         container.innerHTML = '<div class="queue-empty">Очередь пуста</div>';
@@ -501,54 +485,54 @@ function renderVinQueue() {
 
 // --- INIT ---
 function init() {
-    // Brand select
     const brandSelect = $('brandSelect');
-    CONFIG.brands.forEach(b => {
-        const opt = document.createElement('option');
-        opt.value = b.id;
-        opt.textContent = b.name;
-        brandSelect.appendChild(opt);
-    });
-    brandSelect.onchange = onBrandChange;
+    if (brandSelect) {
+        CONFIG.brands.forEach(b => {
+            const opt = document.createElement('option');
+            opt.value = b.id;
+            opt.textContent = b.name;
+            brandSelect.appendChild(opt);
+        });
+        brandSelect.onchange = onBrandChange;
+    }
 
-    // Manager select
     const mgrSelect = $('managerSelect');
-    CONFIG.managers.forEach(m => {
-        const opt = document.createElement('option');
-        opt.value = m.id;
-        opt.textContent = m.name;
-        mgrSelect.appendChild(opt);
-    });
+    if (mgrSelect) {
+        CONFIG.managers.forEach(m => {
+            const opt = document.createElement('option');
+            opt.value = m.id;
+            opt.textContent = m.name;
+            mgrSelect.appendChild(opt);
+        });
+    }
 
-    // VIN modal
     const vinClose = $('vinClose');
     if (vinClose) vinClose.onclick = closeVinModal;
+    
     const vinSubmit = $('vinSubmit');
     if (vinSubmit) vinSubmit.onclick = submitVin;
 
-    // Save button
     const saveBtn = $('saveBtn');
     if (saveBtn) saveBtn.onclick = saveCalculation;
 
-    // Clear button
     const clearBtn = $('clearBtn');
-    if (clearBtn) clearBtn.onclick = () => {
-        selectedWorks = [];
-        expandedCats.clear();
-        expandedIncludes.clear();
-        $('worksList').innerHTML = '';
-        renderCalc();
-    };
+    if (clearBtn) {
+        clearBtn.onclick = () => {
+            selectedWorks = [];
+            expandedCats.clear();
+            expandedIncludes.clear();
+            const wl = $('worksList');
+            if (wl) wl.innerHTML = '';
+            renderCalc();
+        };
+    }
 
-    // Load brand data (volkswagen is loaded via script tag)
     if (typeof volkswagenDB !== 'undefined') {
         currentBrandData = volkswagenDB;
-        // Validate
         const errors = validateWorks(volkswagenDB, 'Volkswagen');
         if (errors.length > 0) console.warn('Validation errors:', errors);
     }
 
-    // Render history & queue
     renderHistory();
     renderVinQueue();
 }
@@ -560,11 +544,8 @@ function onBrandChange() {
     const brand = CONFIG.brands.find(b => b.id === brandId);
     currentBrand = brand;
 
-    // For now only volkswagen is loaded
     if (brandId === 'volkswagen' && typeof volkswagenDB !== 'undefined') {
         currentBrandData = volkswagenDB;
-        const errors = validateWorks(volkswagenDB, 'Volkswagen');
-        if (errors.length > 0) console.warn('Validation errors:', errors);
     } else {
         currentBrandData = null;
     }
@@ -574,7 +555,6 @@ function onBrandChange() {
         return;
     }
 
-    // Render model select
     const modelSelect = $('modelSelect');
     modelSelect.innerHTML = '<option value="">— Выберите модель —</option>';
     const models = [...new Set(currentBrandData.modifications.map(m => m.model))];
@@ -587,12 +567,17 @@ function onBrandChange() {
     modelSelect.onchange = onModelChange;
     modelSelect.disabled = false;
 
-    // Reset downstream
-    $('generationSelect').innerHTML = '<option value="">— Сначала выберите модель —</option>';
-    $('generationSelect').disabled = true;
-    $('engineSelect').innerHTML = '<option value="">— Сначала выберите поколение —</option>';
-    $('engineSelect').disabled = true;
-    $('worksList').innerHTML = '';
+    const genSelect = $('generationSelect');
+    genSelect.innerHTML = '<option value="">— Сначала выберите модель —</option>';
+    genSelect.disabled = true;
+    
+    const engSelect = $('engineSelect');
+    engSelect.innerHTML = '<option value="">— Сначала выберите поколение —</option>';
+    engSelect.disabled = true;
+    
+    const wl = $('worksList');
+    if (wl) wl.innerHTML = '';
+    
     selectedWorks = [];
     expandedCats.clear();
     expandedIncludes.clear();
@@ -615,9 +600,13 @@ function onModelChange() {
     genSelect.onchange = onGenerationChange;
     genSelect.disabled = false;
 
-    $('engineSelect').innerHTML = '<option value="">— Сначала выберите поколение —</option>';
-    $('engineSelect').disabled = true;
-    $('worksList').innerHTML = '';
+    const engSelect = $('engineSelect');
+    engSelect.innerHTML = '<option value="">— Сначала выберите поколение —</option>';
+    engSelect.disabled = true;
+    
+    const wl = $('worksList');
+    if (wl) wl.innerHTML = '';
+    
     selectedWorks = [];
     expandedCats.clear();
     expandedIncludes.clear();
@@ -641,7 +630,9 @@ function onGenerationChange() {
     engSelect.onchange = onEngineChange;
     engSelect.disabled = false;
 
-    $('worksList').innerHTML = '';
+    const wl = $('worksList');
+    if (wl) wl.innerHTML = '';
+    
     selectedWorks = [];
     expandedCats.clear();
     expandedIncludes.clear();
