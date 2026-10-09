@@ -15,16 +15,21 @@ let historyItems = [];
 
 // Иконки категорий работ
 const CAT_ICONS = {
-    to: '🛢️',
-    engine: '⚙️',
-    engine_big: '🏗️',
-    gearbox: '🔄',
-    awd: '🧭',
-    suspension: '🌀',
-    brakes: '🛑',
-    steering: '🛞',
-    electrics: '⚡',
-    exhaust: '💨'
+    to: '🛢️', engine: '⚙️', engine_big: '🏗️', gearbox: '🔄', awd: '🧭',
+    suspension: '🌀', brakes: '🛑', steering: '🛞', electrics: '⚡', exhaust: '💨'
+};
+
+// Фирменные названия полного привода по маркам
+const AWD_NAMES = {
+    volkswagen: '4MOTION',
+    audi: 'QUATTRO',
+    bmw: 'xDrive',
+    mercedes: '4MATIC',
+    porsche: 'AWD',
+    skoda: '4x4',
+    seat: '4Drive',
+    mini: 'ALL4',
+    alpine: '4WD'
 };
 
 const $ = function(id) { return document.getElementById(id); };
@@ -47,7 +52,33 @@ function debounce(fn, ms) {
     };
 }
 
-// Тип КПП с заглавной буквы (в т.ч. слово в скобках)
+// Привод: красивая надпись
+function driveLabel(drive, brandId) {
+    if (!drive) return drive;
+    if (drive.indexOf('Полный') !== -1) {
+        const name = AWD_NAMES[brandId] || 'AWD';
+        return name + ' — Полный привод';
+    }
+    if (drive.indexOf('Передн') !== -1) return 'FWD — Передний привод';
+    if (drive.indexOf('Задн') !== -1) return 'RWD — Задний привод';
+    return drive;
+}
+
+function currentBrandId() {
+    return currentBrand ? currentBrand.id : 'volkswagen';
+}
+
+// Тип ГРМ: явное поле или по работам модификации
+function timingLabel(mod) {
+    if (mod.timing) return mod.timing;
+    if (mod.works) {
+        if (mod.works.indexOf('timing_belt') !== -1) return 'Ремень';
+        if (mod.works.indexOf('timing_chain') !== -1) return 'Цепь';
+    }
+    return null;
+}
+
+// Тип КПП с заглавной буквы
 function capType(t) {
     if (!t) return t;
     return String(t).replace(/(^|[\s(])([a-zа-яё])/g, function(m, p1, p2) { return p1 + p2.toUpperCase(); });
@@ -160,7 +191,7 @@ function renderJournalList(filter) {
     });
 }
 
-// --- HISTORY (последние 5 из облака) ---
+// --- HISTORY ---
 function renderHistory() {
     const section = $('historySection');
     if (!section) return;
@@ -393,7 +424,7 @@ function onGearboxChange() {
     expandedCats.clear(); expandedIncludes.clear();
     const mods = currentBrandData.modifications.filter(function(m) { return m.id === modId; });
     const drives = [...new Set(mods.map(function(m) { return m.drive; }))];
-    fillSelect('driveSelect', drives);
+    fillSelect('driveSelect', drives.map(function(d) { return driveLabel(d, currentBrandId()); }), drives);
     addAddOption('driveSelect', 'привод');
 }
 
@@ -429,7 +460,7 @@ function onSearchInput() {
     } else {
         dropdown.innerHTML = searchResults.map(function(m, i) {
             return '<div class="item" data-index="' + i + '"><div class="item-model">' + m.model + ' — ' + m.generation + '</div>' +
-                '<div class="item-detail">' + m.engine.code + ' · ' + m.engine.volume + ' · ' + m.engine.power + ' · ' + m.gearbox.code + ' · ' + m.drive + '</div></div>';
+                '<div class="item-detail">' + m.engine.code + ' · ' + m.engine.volume + ' · ' + m.engine.power + ' · ' + m.gearbox.code + ' · ' + driveLabel(m.drive, currentBrandId()) + '</div></div>';
         }).join('');
         dropdown.querySelectorAll('.item').forEach(function(item) {
             item.onclick = function() { selectFromSearch(searchResults[parseInt(item.dataset.index)]); };
@@ -496,9 +527,14 @@ function onWorksSearch() {
     });
 }
 
-// --- FLUIDS ---
+// --- FLUIDS + TECH DATA ---
 function renderFluids(mod) {
     const f = mod.fluids;
+    const panel = $('fluidsPanel');
+    if (panel) {
+        const h2 = panel.querySelector('h2');
+        if (h2) h2.textContent = 'Технические данные и заправочные объёмы';
+    }
     const rows = [
         ['Моторное масло', f.engine_oil],
         ['Масло КПП', f.gearbox_oil],
@@ -510,13 +546,16 @@ function renderFluids(mod) {
         ['Усилитель руля (ГУР)', f.power_steering],
         ['Хладагент кондиционера', f.refrigerant]
     ];
-    let html = '<tr><th>Жидкость</th><th>Объём</th><th>Допуск</th><th>Вязкость</th></tr>';
+    let html = '<tr><th>Параметр</th><th>Объём</th><th>Допуск</th><th>Вязкость</th></tr>';
+    const timing = timingLabel(mod);
+    html += '<tr><td class="fluid-name">Привод ГРМ</td><td colspan="3"><strong>' + (timing ? timing : '—') + '</strong></td></tr>';
+    html += '<tr><td class="fluid-name">Привод</td><td colspan="3"><strong>' + driveLabel(mod.drive, currentBrandId()) + '</strong></td></tr>';
     rows.forEach(function(row) {
         if (!row[1]) html += '<tr><td class="fluid-name">' + row[0] + '</td><td class="fluid-na" colspan="3">—</td></tr>';
         else html += '<tr><td class="fluid-name">' + row[0] + '</td><td>' + dash(row[1].volume) + '</td><td>' + dash(row[1].spec) + '</td><td>' + dash(row[1].viscosity) + '</td></tr>';
     });
     if ($('fluidsTable')) $('fluidsTable').innerHTML = html;
-    if ($('fluidsPanel')) $('fluidsPanel').classList.add('active');
+    if (panel) panel.classList.add('active');
 }
 
 // --- WORKS LIST ---
