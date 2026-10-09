@@ -76,7 +76,7 @@ function closeAddModal() {
     if (overlay) overlay.classList.remove('active');
 }
 
-// --- JOURNAL (полный архив) ---
+// --- JOURNAL ---
 function openJournal() {
     const overlay = $('journalOverlay');
     if (!overlay) return;
@@ -132,33 +132,22 @@ function renderJournalList(filter) {
     });
 }
 
-// --- HISTORY (последние 5 из облака) ---
+// --- HISTORY (последние 5 из облака, заголовок просто «История») ---
 function renderHistory() {
     const section = $('historySection');
     if (!section) return;
     const list = $('historyList');
     if (!list) return;
 
-    if (!CONFIG.cloudUrl) {
-        renderLocalHistory();
-        return;
-    }
+    if (!CONFIG.cloudUrl) { renderLocalHistory(); return; }
 
-    const h3 = section.querySelector('h3');
-    if (h3) h3.textContent = 'Последние расчёты (общие)';
     section.style.display = 'block';
     list.innerHTML = '<div class="calc-empty" style="padding:12px 20px">Загружаем...</div>';
 
     cloudGet('getCalcs').then(function(j) {
-        if (!j || !j.ok) {
-            renderLocalHistory();
-            return;
-        }
+        if (!j || !j.ok) { renderLocalHistory(); return; }
         historyItems = (j.items || []).slice(0, 5);
-        if (historyItems.length === 0) {
-            section.style.display = 'none';
-            return;
-        }
+        if (historyItems.length === 0) { section.style.display = 'none'; return; }
         list.innerHTML = historyItems.map(function(it) {
             return '<div class="history-card" data-row="' + it.row + '">' +
                 '<div class="h-row"><span class="h-car">' + (it.carLabel || '—') + '</span>' +
@@ -206,8 +195,6 @@ function renderLocalHistory() {
     if (!list) return;
     let history = [];
     try { history = JSON.parse(localStorage.getItem('nemesia_history') || '[]'); } catch(e) {}
-    const h3 = section.querySelector('h3');
-    if (h3) h3.textContent = 'История (последние 5, локально)';
     if (history.length === 0) { section.style.display = 'none'; return; }
     section.style.display = 'block';
     list.innerHTML = '';
@@ -223,7 +210,7 @@ function renderLocalHistory() {
 
 // --- WORK ITEM TEMPLATE ---
 function workItemHTML(workId, work, price, inCalc, customNh) {
-    const rateLabel = work.rateType === 'engine' ? 'ДВС' : '';
+    const rateLabel = work.rateType === 'engine' ? 'ДВС/КПП' : '';
     const badge = rateLabel ? '<span class="rate-badge ' + work.rateType + '">' + rateLabel + '</span>' : '';
     const nhLabel = customNh ? customNh + ' н/ч' : work.nh + ' н/ч';
     const dotColor = customNh ? '#27ae60' : '#e74c3c';
@@ -595,7 +582,7 @@ function toggleWork(workId, itemEl) {
 function renderCalc() {
     const body = $('calcBody');
     if (!body) return;
-    if (selectedWorks.length === 0) { body.innerHTML = '<div class="calc-empty">Выберите работы из списка слева</div>'; return; }
+    if (selectedWorks.length === 0) { body.innerHTML = '<div class="calc-empty">👈 Выберите работы из списка слева</div>'; return; }
     let html = '';
     let totalWorks = 0;
     let totalCoeff = 0;
@@ -619,7 +606,7 @@ function renderCalc() {
         }
         html += '<div class="coeff-row" data-index="' + i + '">';
         sw.coefficients.forEach(function(c, ci) {
-            html += '<div class="coeff-display">' + CONFIG.coefficients[c.type].label + ': +' + c.percent + '% <span class="coeff-rub">(' + formatRub(c.rub) + ')</span> <span class="coeff-remove" data-cindex="' + ci + '">убрать</span></div>';
+            html += '<div class="coeff-display">⚠️ ' + CONFIG.coefficients[c.type].label + ': +' + c.percent + '% <span class="coeff-rub">(' + formatRub(c.rub) + ')</span> <span class="coeff-remove" data-cindex="' + ci + '">убрать</span></div>';
         });
         html += '<select class="coeff-add" data-index="' + i + '"><option value="">+ Добавить коэффициент</option>';
         Object.keys(CONFIG.coefficients).forEach(function(ck) {
@@ -629,7 +616,8 @@ function renderCalc() {
         totalWorks += sw.price + coeffSum;
         totalCoeff += coeffSum;
     });
-    html += '<div class="calc-total"><div class="calc-total-row"><span>Работы:</span><span>' + formatRub(totalWorks - totalCoeff) + '</span></div>';
+    html += '<div class="calc-total">';
+    html += '<div class="calc-total-row"><span>Работы:</span><span>' + formatRub(totalWorks - totalCoeff) + '</span></div>';
     if (totalCoeff > 0) html += '<div class="calc-total-row"><span>Коэффициенты:</span><span>+' + formatRub(totalCoeff) + '</span></div>';
     html += '<div class="calc-total-row final"><span>Итого:</span><span>' + formatRub(totalWorks) + '</span></div></div>';
     body.innerHTML = html;
