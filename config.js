@@ -20,7 +20,7 @@ const CONFIG = {
         { id: 'm3', name: 'Сергей' }
     ],
     brands: [
-        { id: 'volkswagen', name: 'Volkswagen', file: 'volkswagen.js' }
+        { id: 'volkswagen', name: 'VOLKSWAGEN', file: 'volkswagen.js' }
     ]
 };
 
