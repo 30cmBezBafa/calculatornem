@@ -114,14 +114,26 @@ function dash(v) {
 }
 
 // --- ЛЕНИВАЯ ПОДГРУЗКА ФАЙЛА МАРКИ ---
+// Базы марок объявлены через const, поэтому их НЕТ в window.
+// Ищем базу по имени переменной из config через eval.
+function brandDBByName(varName) {
+    if (window[varName]) return window[varName];
+    try {
+        return eval('typeof ' + varName + ' !== "undefined" ? ' + varName + ' : null');
+    } catch (e) {
+        return null;
+    }
+}
+
 function ensureBrand(brandId) {
     const b = CONFIG.brands.find(function(x) { return x.id === brandId; });
     if (!b) return Promise.resolve(null);
-    if (window[b.varName]) return Promise.resolve(window[b.varName]);
+    const existing = brandDBByName(b.varName);
+    if (existing) return Promise.resolve(existing);
     return new Promise(function(res) {
         const s = document.createElement('script');
         s.src = b.file;
-        s.onload = function() { res(window[b.varName] || null); };
+        s.onload = function() { res(brandDBByName(b.varName)); };
         s.onerror = function() { res(null); };
         document.head.appendChild(s);
     });
