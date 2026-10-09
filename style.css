@@ -41,6 +41,7 @@
     --shadow-lg: 0 4px 12px rgba(0,0,0,0.4);
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
 body {
     font-family: -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
     background: var(--bg);
@@ -48,6 +49,7 @@ body {
     font-size: 14px;
     line-height: 1.5;
     transition: background 0.2s, color 0.2s;
+    -webkit-tap-highlight-color: transparent;
 }
 .header {
     background: var(--bg-card);
@@ -632,3 +634,68 @@ body {
 ::-webkit-scrollbar-track { background: var(--bg); }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* ============================================
+МОБИЛЬНАЯ ВЕРСИЯ (телефоны и планшеты)
+============================================ */
+@media (max-width: 900px) {
+    .main-container {
+        flex-direction: column;
+        min-height: auto;
+    }
+    .left-panel,
+    .right-panel {
+        width: 100%;
+        border-left: none;
+        overflow-y: visible;
+    }
+    .header {
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 8px 12px;
+    }
+    .header-logo { font-size: 16px; }
+    .header-logo span { display: none; }
+    .header-spacer { display: none; }
+    .select-row {
+        flex-direction: column;
+        gap: 6px;
+    }
+    .fluids-table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+    .work-item {
+        padding: 12px 12px 12px 20px;
+    }
+    .work-item .work-price { min-width: 60px; }
+    .calc-buttons {
+        flex-direction: column;
+    }
+    .car-search-wrapper input,
+    .works-search,
+    .select-group select,
+    .manager-block select {
+        font-size: 16px;
+    }
+    .modal {
+        width: 95%;
+        padding: 16px;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    .includes-list { padding-left: 30px; }
+    .includes-list .include-item { max-width: 100%; }
+}
+@media (max-width: 480px) {
+    .left-panel,
+    .right-panel { padding: 12px; }
+    .header-btn { padding: 6px 10px; font-size: 12px; }
+    .manager-block { padding: 4px 8px; font-size: 12px; }
+    .car-selector,
+    .fluids-panel,
+    .works-panel,
+    .calc-panel { padding: 12px; }
+    .calc-total-row.final { font-size: 16px; }
+}
