@@ -6,37 +6,6 @@
     <title>Немеция — Админка</title>
     <link rel="icon" href="img/logo.png">
     <link rel="stylesheet" href="style.css">
-    <style>
-        .login-overlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: var(--bg); z-index: 3000;
-            display: flex; align-items: center; justify-content: center; padding: 16px;
-        }
-        .login-box {
-            background: var(--bg-card); border: 1px solid var(--accent); border-radius: 2px;
-            padding: 28px; width: 100%; max-width: 380px; box-shadow: var(--shadow-lg);
-        }
-        .login-box h2 { font-size: 15px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
-        .login-box p { font-size: 12px; color: var(--text-muted); margin-bottom: 16px; }
-        .login-box label { display: block; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); margin: 10px 0 5px; }
-        .login-box input, .login-box select {
-            width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 2px;
-            background: var(--bg-input); color: var(--text); font-size: 14px; outline: none;
-        }
-        .login-box input:focus, .login-box select:focus { border-color: var(--accent); }
-        .login-box .login-btn {
-            width: 100%; margin-top: 16px; padding: 11px; border: 1px solid var(--accent); border-radius: 2px;
-            background: var(--accent); color: var(--accent-text); font-size: 12px; font-weight: 800;
-            letter-spacing: 0.6px; text-transform: uppercase; cursor: pointer;
-        }
-        .login-err { color: var(--danger); font-size: 12px; margin-top: 10px; min-height: 16px; }
-        #adminRoot { display: none; }
-        #adminRoot.unlocked { display: block; }
-        .passport-preview {
-            background: var(--bg-hover); border: 1px dashed var(--border); border-radius: 2px;
-            padding: 8px 10px; font-size: 12px; font-weight: 700; margin: 10px 0; color: var(--text);
-        }
-    </style>
 </head>
 <body>
     <!-- ЭКРАН ВХОДА -->
@@ -67,14 +36,14 @@
             </div>
             <div class="header-spacer"></div>
             <span id="whoAmI" style="font-size:12px;font-weight:700;color:var(--text-muted);"></span>
-            <button id="logoutBtn" class="header-btn">🚪 Выйти</button>
+            <button id="logoutBtn" class="header-btn">Выйти</button>
             <label class="theme-toggle" title="Переключить тему">
                 <span>🌙</span>
                 <input type="checkbox" id="themeToggle">
                 <span class="slider"></span>
                 <span>☀️</span>
             </label>
-            <a href="index.html" class="header-btn">🧮 Калькулятор</a>
+            <a href="index.html" class="header-btn">Калькулятор</a>
         </header>
 
         <div class="admin-wrap">
@@ -84,8 +53,8 @@
                     <div class="admin-field"><label>Текущий пароль</label><input type="password" id="chgOld" class="admin-input" placeholder="Текущий"></div>
                     <div class="admin-field"><label>Новый пароль</label><input type="password" id="chgNew" class="admin-input" placeholder="Минимум 6 символов"></div>
                     <div class="admin-field"><label>Повторите новый</label><input type="password" id="chgNew2" class="admin-input" placeholder="Повтор"></div>
-                    <div class="admin-field" style="flex:0 0 auto;display:flex;align-items:flex-end;">
-                        <button id="chgPassBtn" class="admin-btn primary">🔑 Сменить пароль</button>
+                    <div class="admin-field" style="display:flex;align-items:flex-end;">
+                        <button id="chgPassBtn" class="admin-btn primary">Сменить пароль</button>
                     </div>
                 </div>
             </div>
@@ -95,8 +64,8 @@
                 <div class="admin-row">
                     <div class="admin-field"><label>ДВС / КПП (₽)</label><input type="number" id="rateEngine" class="admin-input" placeholder="3000"></div>
                     <div class="admin-field"><label>Остальные работы (₽)</label><input type="number" id="rateStandard" class="admin-input" placeholder="2500"></div>
-                    <div class="admin-field" style="flex:0 0 auto;display:flex;align-items:flex-end;">
-                        <button id="saveRatesBtn" class="admin-btn primary">💾 Сохранить ставки</button>
+                    <div class="admin-field" style="display:flex;align-items:flex-end;">
+                        <button id="saveRatesBtn" class="admin-btn primary">Сохранить ставки</button>
                     </div>
                 </div>
             </div>
@@ -107,8 +76,8 @@
                     <div class="admin-field"><label>Прикипевшие / ржавые болты (%)</label><input type="number" id="coeffRusty" class="admin-input" placeholder="15"></div>
                     <div class="admin-field"><label>Алюминиевые детали (%)</label><input type="number" id="coeffAluminum" class="admin-input" placeholder="20"></div>
                     <div class="admin-field"><label>Установлено ГБО (%)</label><input type="number" id="coeffLpg" class="admin-input" placeholder="10"></div>
-                    <div class="admin-field" style="flex:0 0 auto;display:flex;align-items:flex-end;">
-                        <button id="saveCoeffsBtn" class="admin-btn primary">💾 Сохранить %</button>
+                    <div class="admin-field" style="display:flex;align-items:flex-end;">
+                        <button id="saveCoeffsBtn" class="admin-btn primary">Сохранить %</button>
                     </div>
                 </div>
                 <div class="admin-row" style="margin-top:14px;">
@@ -117,8 +86,8 @@
                 <div class="admin-row" style="margin-top:12px;">
                     <div class="admin-field"><label>Название нового коэффициента</label><input type="text" id="coeffNewLabel" class="admin-input" placeholder="Например: Срочный заказ"></div>
                     <div class="admin-field" style="max-width:120px;"><label>Процент</label><input type="number" id="coeffNewPercent" class="admin-input" placeholder="10"></div>
-                    <div class="admin-field" style="flex:0 0 auto;display:flex;align-items:flex-end;">
-                        <button id="addCoeffBtn" class="admin-btn primary">➕ Добавить коэффициент</button>
+                    <div class="admin-field" style="display:flex;align-items:flex-end;">
+                        <button id="addCoeffBtn" class="admin-btn primary">Добавить коэффициент</button>
                     </div>
                 </div>
             </div>
@@ -128,8 +97,8 @@
                 <table class="admin-table"><tbody id="managersTable"></tbody></table>
                 <div class="admin-row" style="margin-top:10px;">
                     <div class="admin-field"><label>Новый менеджер</label><input type="text" id="newManagerName" class="admin-input" placeholder="Например: Алексей"></div>
-                    <div class="admin-field" style="flex:0 0 auto;display:flex;align-items:flex-end;">
-                        <button id="addManagerBtn" class="admin-btn primary">➕ Добавить</button>
+                    <div class="admin-field" style="display:flex;align-items:flex-end;">
+                        <button id="addManagerBtn" class="admin-btn primary">Добавить</button>
                     </div>
                 </div>
             </div>
@@ -137,15 +106,15 @@
             <div class="admin-card">
                 <h2><span class="sec-icon">📨</span> Очередь заявок на добавление</h2>
                 <div id="vinQueueList"></div>
-                </div>
+            </div>
 
             <div class="admin-card">
                 <h2><span class="sec-icon">🚗</span> Модификация: добавить или редактировать</h2>
                 <div class="admin-row">
                     <div class="admin-field"><label>Марка</label><select id="modBrand" class="rate-select"></select></div>
                     <div class="admin-field"><label>Существующая модификация (для редактирования)</label><select id="modEditSelect" class="rate-select"><option value="">— новая модификация —</option></select></div>
-                    <div class="admin-field" style="flex:0 0 auto;display:flex;align-items:flex-end;">
-                        <button id="modLoadBtn" class="admin-btn">⬆️ Загрузить в форму</button>
+                    <div class="admin-field" style="display:flex;align-items:flex-end;">
+                        <button id="modLoadBtn" class="admin-btn">Загрузить в форму</button>
                     </div>
                 </div>
                 <div class="admin-row" style="margin-top:10px;">
@@ -248,7 +217,7 @@
                 <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">Список работ собран автоматически по биркам паспорта. Впиши кастомные нормо-часы — пустые поля возьмут базовое значение из каталога.</p>
                 <div id="modWorksList"></div>
                 <div class="admin-row" style="margin-top:14px;">
-                    <button id="saveModBtn" class="admin-btn primary">💾 Скачать файл марки</button>
+                    <button id="saveModBtn" class="admin-btn primary">Скачать файл марки</button>
                 </div>
             </div>
         </div>
