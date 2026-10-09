@@ -417,11 +417,11 @@ button, select, input, textarea { font-family: inherit; }
     .calc-total-row.final { font-size: 16px; }
 }
 /* ============================================
-ПЛИТКИ МАРОК v2 — РОВНАЯ СЕТКА
+ПЛИТКИ МАРОК v3 — ВСЕ В ОДНУ СТРОКУ
 ============================================ */
 .brand-tiles {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+    grid-template-columns: repeat(10, 1fr);
     gap: 8px;
     margin-bottom: 14px;
 }
@@ -435,7 +435,7 @@ button, select, input, textarea { font-family: inherit; }
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    padding: 6px 8px;
+    padding: 6px 4px;
     transition: border-color 0.12s, box-shadow 0.12s;
     overflow: hidden;
 }
@@ -449,30 +449,27 @@ button, select, input, textarea { font-family: inherit; }
     opacity: 0.8;
     transition: filter 0.12s, opacity 0.12s;
 }
-.brand-tile .brand-tile-text {
-    font-size: 10px;
-    font-weight: 800;
-    letter-spacing: 0.4px;
-    text-transform: uppercase;
-    color: #565656;
-    text-align: center;
-    line-height: 1.15;
-}
+.brand-tile .brand-tile-text { display: none; }
 .brand-tile:hover { border-color: var(--accent); }
 .brand-tile:hover img { filter: grayscale(0); opacity: 1; }
 .brand-tile.active {
     border-color: var(--accent);
     box-shadow: 0 0 0 2px var(--accent);
-    padding: 5px 7px;
+    padding: 5px 3px;
 }
 .brand-tile.active img { filter: grayscale(0); opacity: 1; }
 .brand-tile-add {
     background: var(--bg-card);
     color: var(--text-muted);
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 700;
+    text-align: center;
+    line-height: 1.2;
 }
 .brand-tile-add:hover { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+@media (max-width: 1200px) {
+    .brand-tiles { grid-template-columns: repeat(5, 1fr); }
+}
 @media (max-width: 900px) {
     .brand-tiles { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
     .brand-tile { height: 46px; }
