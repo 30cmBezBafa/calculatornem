@@ -84,7 +84,7 @@ button, select, input, textarea { font-family: inherit; }
     align-items: center;
     gap: 9px;
 }
-/* ЛОГОТИП — В ЦВЕТЕ (без фильтра) */
+/* ЛОГОТИП — В ЦВЕТЕ */
 .logo-img { height: 32px; width: auto; display: none; }
 .logo-img.ok { display: inline-block; }
 .logo-img.ok + .logo-badge { display: none; }
@@ -227,7 +227,6 @@ button, select, input, textarea { font-family: inherit; }
     padding-bottom: 10px;
     border-bottom: 1px solid var(--border);
 }
-/* Цветные emoji-чипы скрыты, вместо них — строгая чёрная плашка */
 .sec-icon { display: none; }
 .car-selector h2::before, .fluids-panel h2::before, .works-panel h2::before, .calc-panel h2::before, .admin-card h2::before {
     content: '';
@@ -316,6 +315,8 @@ button, select, input, textarea { font-family: inherit; }
 }
 .select-group select:focus { border-color: var(--accent); }
 .select-group select:disabled { opacity: 0.45; cursor: default; }
+/* МОДЕЛИ — КАПСОМ */
+#modelSelect, #modelSelect option { text-transform: uppercase; }
 
 /* ---------- FLUIDS ---------- */
 .fluids-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
@@ -356,6 +357,8 @@ button, select, input, textarea { font-family: inherit; }
 .work-category-header:hover { background: var(--bg-hover); }
 .work-category-header .arrow { font-size: 9px; transition: transform 0.15s; width: 12px; color: var(--text); }
 .work-category-header.expanded .arrow { transform: rotate(90deg); }
+/* Иконки категорий — ч/б */
+.work-category-header .cat-icon { filter: grayscale(1); font-size: 13px; line-height: 1; }
 .work-category-header .count {
     margin-left: auto;
     font-size: 11px;
