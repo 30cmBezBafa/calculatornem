@@ -15,7 +15,7 @@ let historyItems = [];
 
 const CAT_ICONS = {
     to: '🛢️', engine: '⚙️', engine_big: '🏗️', gearbox: '🔄', awd: '🧭',
-    suspension: '🌀', brakes: '🛑', steering: '🛞', electrics: '⚡', exhaust: '💨'
+    suspension: '🌀', brakes: '🛑', steering: '🛞', electrics: '⚡', exhaust: '💨', diag: '🔬', climate: '❄️'
 };
 
 const AWD_NAMES = {
