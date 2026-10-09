@@ -13,6 +13,20 @@ let searchResults = [];
 let journalItems = [];
 let historyItems = [];
 
+// Иконки категорий работ
+const CAT_ICONS = {
+    to: '🛢️',
+    engine: '⚙️',
+    engine_big: '🏗️',
+    gearbox: '🔄',
+    awd: '🧭',
+    suspension: '🌀',
+    brakes: '🛑',
+    steering: '🛞',
+    electrics: '⚡',
+    exhaust: '💨'
+};
+
 const $ = function(id) { return document.getElementById(id); };
 const el = function(tag, cls, html) {
     const e = document.createElement(tag);
@@ -31,6 +45,20 @@ function debounce(fn, ms) {
         clearTimeout(t);
         t = setTimeout(function() { fn.apply(null, args); }, ms);
     };
+}
+
+// Тип КПП с заглавной буквы (в т.ч. слово в скобках)
+function capType(t) {
+    if (!t) return t;
+    return String(t).replace(/(^|[\s(])([a-zа-яё])/g, function(m, p1, p2) { return p1 + p2.toUpperCase(); });
+}
+
+// Единый длинный прочерк
+function dash(v) {
+    if (v === null || v === undefined) return '—';
+    const s = String(v).trim();
+    if (s === '' || s === '-') return '—';
+    return s;
 }
 
 // --- CLOUD ---
@@ -132,7 +160,7 @@ function renderJournalList(filter) {
     });
 }
 
-// --- HISTORY (последние 5 из облака, заголовок просто «История») ---
+// --- HISTORY (последние 5 из облака) ---
 function renderHistory() {
     const section = $('historySection');
     if (!section) return;
@@ -352,7 +380,7 @@ function onEngineChange() {
     resetSelect('gearboxSelect'); resetSelect('driveSelect');
     expandedCats.clear(); expandedIncludes.clear();
     const gearboxes = mods.map(function(m) {
-        return { value: m.id, label: m.gearbox.code + ' / ' + m.gearbox.type + ' / ' + m.gearbox.gears + ' ст.', mod: m };
+        return { value: m.id, label: m.gearbox.code + ' / ' + capType(m.gearbox.type) + ' / ' + m.gearbox.gears + ' ст.', mod: m };
     });
     fillSelect('gearboxSelect', gearboxes.map(function(g) { return g.label; }), gearboxes.map(function(g) { return g.value; }));
     addAddOption('gearboxSelect', 'КПП');
@@ -485,7 +513,7 @@ function renderFluids(mod) {
     let html = '<tr><th>Жидкость</th><th>Объём</th><th>Допуск</th><th>Вязкость</th></tr>';
     rows.forEach(function(row) {
         if (!row[1]) html += '<tr><td class="fluid-name">' + row[0] + '</td><td class="fluid-na" colspan="3">—</td></tr>';
-        else html += '<tr><td class="fluid-name">' + row[0] + '</td><td>' + row[1].volume + '</td><td>' + row[1].spec + '</td><td>' + row[1].viscosity + '</td></tr>';
+        else html += '<tr><td class="fluid-name">' + row[0] + '</td><td>' + dash(row[1].volume) + '</td><td>' + dash(row[1].spec) + '</td><td>' + dash(row[1].viscosity) + '</td></tr>';
     });
     if ($('fluidsTable')) $('fluidsTable').innerHTML = html;
     if ($('fluidsPanel')) $('fluidsPanel').classList.add('active');
@@ -512,7 +540,7 @@ function renderWorks(mod) {
         const header = el('div', 'work-category-header');
         const isExpanded = expandedCats.has(catKey);
         if (isExpanded) { header.classList.add('expanded'); body.classList.add('expanded'); }
-        header.innerHTML = '<span class="arrow">▶</span> ' + categories[catKey] + ' <span class="count">' + byCat[catKey].length + '</span>';
+        header.innerHTML = '<span class="arrow">▶</span> <span class="cat-icon">' + (CAT_ICONS[catKey] || '') + '</span> ' + categories[catKey] + ' <span class="count">' + byCat[catKey].length + '</span>';
         header.onclick = function() {
             const expanded = header.classList.toggle('expanded');
             body.classList.toggle('expanded', expanded);
@@ -582,7 +610,7 @@ function toggleWork(workId, itemEl) {
 function renderCalc() {
     const body = $('calcBody');
     if (!body) return;
-    if (selectedWorks.length === 0) { body.innerHTML = '<div class="calc-empty">👈 Выберите работы из списка слева</div>'; return; }
+    if (selectedWorks.length === 0) { body.innerHTML = '<div class="calc-empty">Выберите работы из списка слева</div>'; return; }
     let html = '';
     let totalWorks = 0;
     let totalCoeff = 0;
@@ -606,7 +634,7 @@ function renderCalc() {
         }
         html += '<div class="coeff-row" data-index="' + i + '">';
         sw.coefficients.forEach(function(c, ci) {
-            html += '<div class="coeff-display">⚠️ ' + CONFIG.coefficients[c.type].label + ': +' + c.percent + '% <span class="coeff-rub">(' + formatRub(c.rub) + ')</span> <span class="coeff-remove" data-cindex="' + ci + '">убрать</span></div>';
+            html += '<div class="coeff-display">' + CONFIG.coefficients[c.type].label + ': +' + c.percent + '% <span class="coeff-rub">(' + formatRub(c.rub) + ')</span> <span class="coeff-remove" data-cindex="' + ci + '">убрать</span></div>';
         });
         html += '<select class="coeff-add" data-index="' + i + '"><option value="">+ Добавить коэффициент</option>';
         Object.keys(CONFIG.coefficients).forEach(function(ck) {
