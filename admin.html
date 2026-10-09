@@ -138,6 +138,10 @@
                     <label>Момент</label>
                     <input type="text" id="modEngineTorque" class="admin-input" placeholder="Например: 200 Нм">
                 </div>
+                <div class="admin-field">
+                    <label>Привод ГРМ</label>
+                    <input type="text" id="modTiming" class="admin-input" placeholder="Цепь или Ремень">
+                </div>
             </div>
             <div class="admin-row" style="margin-top:10px;">
                 <div class="admin-field">
@@ -155,9 +159,9 @@
                 <div class="admin-field">
                     <label>Привод</label>
                     <select id="modDrive" class="rate-select">
-                        <option value="Передний">Передний</option>
-                        <option value="Полный (4Motion)">Полный (4Motion)</option>
-                        <option value="Задний">Задний</option>
+                        <option value="Передний">FWD — Передний привод</option>
+                        <option value="Задний">RWD — Задний привод</option>
+                        <option value="Полный (4Motion)">Полный привод (4MOTION / QUATTRO / xDrive / 4MATIC)</option>
                     </select>
                 </div>
             </div>
@@ -188,7 +192,7 @@
             </div>
 
             <h2 style="margin-top:18px;"><span class="sec-icon">🛠️</span> Работы и нормо-часы</h2>
-            <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">Впиши нормо-часы напротив работы — она попадёт в модификацию. Пустые поля игнорируются.</p>
+            <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">Впиши нормо-часы напротив работы — она попадёт в модификацию. Пустые поля игнорируются. Если укажешь н/ч для «Замена цепи ГРМ» или «Замена ремня ГРМ» — тип ГРМ определится автоматически.</p>
             <div id="modWorksList"></div>
             <div class="admin-row" style="margin-top:14px;">
                 <button id="saveModBtn" class="admin-btn primary">💾 Скачать обновлённый файл базы</button>
