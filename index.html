@@ -4,12 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Немеция — Калькулятор нормо-часов</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%232563eb'/><text x='50' y='68' font-size='55' font-family='Arial' font-weight='bold' fill='white' text-anchor='middle'>N</text></svg>">
+    <link rel="icon" href="logo.png">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <header class="header">
         <div class="header-logo">
+            <img src="logo.png" alt="" class="logo-img" onload="this.classList.add('ok')" onerror="this.style.display='none'">
             <span class="logo-badge">N</span>
             НЕМЕЦИЯ
             <span class="logo-sub">калькулятор нормо-часов</span>
@@ -97,13 +98,12 @@
             </div>
 
             <div id="historySection" class="history-section" style="display:none;">
-                <h3>История (последние 5)</h3>
+                <h3>История</h3>
                 <div id="historyList"></div>
             </div>
         </div>
     </div>
 
-    <!-- Модалка запроса на добавление -->
     <div class="modal-overlay" id="addOverlay">
         <div class="modal">
             <h3>➕ Запрос на добавление в базу</h3>
@@ -131,7 +131,6 @@
         </div>
     </div>
 
-    <!-- Модалка журнала -->
     <div class="modal-overlay" id="journalOverlay">
         <div class="modal">
             <h3>☁️ Журнал расчётов (общий)</h3>
