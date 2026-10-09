@@ -20,15 +20,15 @@ const CONFIG = {
         { id: 'm4', name: 'Ванжа М.С.', passHash: '' }
     ],
     brands: [
-        { id: 'volkswagen', name: 'Volkswagen', file: 'volkswagen.js', varName: 'volkswagenDB' },
-        { id: 'audi',       name: 'Audi',       file: 'audi.js',       varName: 'audiDB' },
-        { id: 'skoda',      name: 'Skoda',      file: 'skoda.js',      varName: 'skodaDB' },
-        { id: 'seat',       name: 'SEAT',       file: 'seat.js',       varName: 'seatDB' },
-        { id: 'porsche',    name: 'Porsche',    file: 'porsche.js',    varName: 'porscheDB' },
-        { id: 'bmw',        name: 'BMW',        file: 'bmw.js',        varName: 'bmwDB' },
-        { id: 'mini',       name: 'MINI',       file: 'mini.js',       varName: 'miniDB' },
-        { id: 'alpina',     name: 'ALPINA',     file: 'alpina.js',     varName: 'alpinaDB' },
-        { id: 'mercedes',   name: 'Mercedes-Benz', file: 'mercedes.js', varName: 'mercedesDB' }
+        { id: 'volkswagen', name: 'Volkswagen',    file: 'volkswagen.js', varName: 'volkswagenDB' },
+        { id: 'audi',       name: 'Audi',          file: 'audi.js',       varName: 'audiDB' },
+        { id: 'skoda',      name: 'Skoda',         file: 'skoda.js',      varName: 'skodaDB' },
+        { id: 'seat',       name: 'SEAT',          file: 'seat.js',       varName: 'seatDB' },
+        { id: 'porsche',    name: 'Porsche',       file: 'porsche.js',    varName: 'porscheDB' },
+        { id: 'bmw',        name: 'BMW',           file: 'bmw.js',        varName: 'bmwDB' },
+        { id: 'mini',       name: 'MINI',          file: 'mini.js',       varName: 'miniDB' },
+        { id: 'alpina',     name: 'ALPINA',        file: 'alpina.js',     varName: 'alpinaDB' },
+        { id: 'mercedes',   name: 'Mercedes-Benz', file: 'mercedes.js',   varName: 'mercedesDB' }
     ],
     // === СПРАВОЧНИКИ ДЛЯ СБОРКИ ПАСПОРТА ===
     refs: {
@@ -58,20 +58,29 @@ const CONFIG = {
             P_CWDA:    { fuel: 'petrol', timing: 'chain', injection: 'direct', turbo: false }
         },
         engineCodes: {
-            CZCA: 'EA211_TSI', CZDA: 'EA211_TSI', DKLA: 'EA211_TSI',
+            // VW/Skoda/SEAT/Audi
+            CZCA: 'EA211_TSI', CZDA: 'EA211_TSI', DKLA: 'EA211_TSI', CJSA: 'EA888',
             CWVA: 'EA211_MPI', CFNA: 'EA111',
-            CZPA: 'EA888', CDNB: 'EA888', CJSA: 'EA888', DAXA: 'EA888', DAXB: 'EA888',
+            CZPA: 'EA888', CDNB: 'EA888', DAXA: 'EA888', DAXB: 'EA888',
             DEUA: 'EA288', DFGA: 'EA288',
             CDUD: 'V6_TDI', CASA: 'V6_TDI',
-            N13B16: 'N13', N18B16: 'N18', N20B20: 'N20', N47D20: 'N47', N55B30: 'N55', N63B44: 'N63',
+            // BMW / MINI
+            N13B16: 'N13', N18B16: 'N18', N20B20: 'N20', N47D20: 'N47',
+            N55B30: 'N55', N63B44: 'N63',
             B38A15: 'B38', B48A20: 'B48', B47D20: 'B47',
+            // Mercedes-Benz
             M271E18: 'M271', M274DE20: 'M274', OM651DE22: 'OM651',
-            CNCA: 'P_CNCA', CTBA: 'P_CTBA', CTCA: 'P_CTCA', CVWA: 'P_CVWA', CWDA: 'P_CWDA'
+            // Porsche / ALPINA (через N55)
+            CNCA: 'P_CNCA', CTBA: 'P_CTBA', CTCA: 'P_CTCA',
+            CVWA: 'P_CVWA', CWDA: 'P_CWDA'
         },
         gearboxFamilies: {
+            // DSG / S-tronic / PDK
             DQ200: { gbType: 'dsg' }, DQ250: { gbType: 'dsg' }, DQ500: { gbType: 'dsg' },
             DL382: { gbType: 'dsg' }, DL501: { gbType: 'dsg' }, PDK: { gbType: 'dsg' },
+            // Manual
             '02T': { gbType: 'manual' }, '6MT': { gbType: 'manual' },
+            // Automatic / ZF / Mercedes G-Tronic / MINI AT
             '09D': { gbType: 'automatic' }, ZF8HP: { gbType: 'automatic' }, ZF6HP: { gbType: 'automatic' },
             '7G': { gbType: 'automatic' }, '9G': { gbType: 'automatic' },
             AT6: { gbType: 'automatic' }, AT8: { gbType: 'automatic' }, '8AT': { gbType: 'automatic' }
@@ -137,12 +146,12 @@ const worksCatalog = {
         includes: ['remove_drives']
     },
     gearbox_oil_change:   { cat: 'gearbox', name: 'Замена масла в КПП', rateType: 'standard', nh: 0.5 },
-    mechatronic:          { cat: 'gearbox', name: 'Замена мехатроника DSG (блок управления + гидроблок)', rateType: 'engine', nh: 6.0, req: { gbType: 'dsg' } },
-    clutch_replacement:   { cat: 'gearbox', name: 'Замена сцепления DSG (пакет фрикционов)', rateType: 'engine', nh: 5.0, req: { gbType: 'dsg' } },
+    mechatronic:          { cat: 'gearbox', name: 'Замена мехатроника DSG/S tronic/PDK', rateType: 'engine', nh: 6.0, req: { gbType: 'dsg' } },
+    clutch_replacement:   { cat: 'gearbox', name: 'Замена сцепления DSG/S tronic/PDK (пакет фрикционов)', rateType: 'engine', nh: 5.0, req: { gbType: 'dsg' } },
     clutch_replacement_manual: { cat: 'gearbox', name: 'Замена комплекта сцепления (диск + корзина + выжимной)', rateType: 'engine', nh: 4.0, req: { gbType: 'manual' } },
     dual_mass_flywheel:   { cat: 'gearbox', name: 'Замена двухмассового маховика', rateType: 'engine', nh: 5.5, req: { turbo: true, gbType: ['dsg', 'manual'] } },
     gearbox_repair:       { cat: 'gearbox', name: 'Ремонт КПП без снятия (замена соленоидов, датчиков)', rateType: 'engine', nh: 8.0 },
-    dsg_adaptation:       { cat: 'gearbox', name: 'Адаптация DSG (сцепления/базовые установки сканером)', rateType: 'standard', nh: 0.4, req: { gbType: 'dsg' } },
+    dsg_adaptation:       { cat: 'gearbox', name: 'Адаптация DSG/S tronic/PDK (базовые установки сканером)', rateType: 'standard', nh: 0.4, req: { gbType: 'dsg' } },
     driveshaft_front_left:  { cat: 'gearbox', name: 'Замена приводного вала переднего левого', rateType: 'standard', nh: 1.5 },
     driveshaft_front_right: { cat: 'gearbox', name: 'Замена приводного вала переднего правого', rateType: 'standard', nh: 1.5 },
     driveshaft_rear_left:   { cat: 'gearbox', name: 'Замена приводного вала заднего левого (4WD)', rateType: 'standard', nh: 1.5, req: { drive: 'awd' } },
@@ -233,7 +242,90 @@ const categories = {
     'exhaust':      'Выхлопная система'
 };
 
-// Проверка: все кастомные н/ч и include/exclude ссылаются на существующие работы
+// Иконки категорий (ч/б через CSS)
+const CAT_ICONS = {
+    to: '🛢️', diag: '🔬', engine: '⚙️', engine_big: '🏗️', gearbox: '🔄', awd: '🧭',
+    suspension: '🌀', brakes: '🛑', steering: '🛞', electrics: '⚡', climate: '❄️', exhaust: '💨'
+};
+
+// Фирменные названия полного привода по маркам
+const AWD_NAMES = {
+    volkswagen: '4MOTION', audi: 'QUATTRO', skoda: '4x4', seat: '4Drive',
+    porsche: 'PTM', bmw: 'xDrive', mini: 'ALL4', alpina: 'xDrive', mercedes: '4MATIC'
+};
+
+// === СБОРКА ПАСПОРТА МОДИФИКАЦИИ ===
+// На вход: объект mod (как в файле марки). На выход: набор бирок.
+function buildPassport(mod) {
+    const passport = {};
+    const code = mod.engine && mod.engine.code;
+    const fam = code && CONFIG.refs.engineCodes[code] && CONFIG.refs.engineFamilies[CONFIG.refs.engineCodes[code]];
+    if (fam) {
+        passport.fuel = fam.fuel;
+        passport.timing = fam.timing;
+        passport.injection = fam.injection;
+        passport.turbo = fam.turbo;
+        passport.pf = fam.fuel === 'diesel' || (fam.fuel === 'petrol' && fam.injection === 'direct' && fam.turbo);
+    }
+    const gbFam = mod.gearbox && mod.gearbox.code && CONFIG.refs.gearboxFamilies[mod.gearbox.code];
+    if (gbFam) passport.gbType = gbFam.gbType;
+    // Привод
+    if (mod.drive) {
+        const d = mod.drive.toLowerCase();
+        if (d.indexOf('полный') !== -1 || d === 'awd' || d.indexOf('4wd') !== -1 || d.indexOf('quattro') !== -1 || d.indexOf('xdrive') !== -1 || d.indexOf('4motion') !== -1 || d.indexOf('4matic') !== -1) {
+            passport.drive = 'awd';
+            // Система полного привода
+            if (mod.awdSys) passport.awdSys = mod.awdSys;
+            else if (d.indexOf('torsen') !== -1) passport.awdSys = 'torsen';
+            else if (d.indexOf('haldex') !== -1) passport.awdSys = 'haldex';
+            else if (d.indexOf('ultra') !== -1) passport.awdSys = 'ultra';
+        } else if (d.indexOf('задн') !== -1 || d === 'rwd') {
+            passport.drive = 'rwd';
+        } else {
+            passport.drive = 'fwd';
+        }
+    }
+    if (mod.suspension) passport.suspension = mod.suspension;   // 'spring' | 'air'
+    if (mod.rear)       passport.rear = mod.rear;               // 'beam' | 'multilink'
+    if (mod.parking)    passport.parking = mod.parking;         // 'mech' | 'epb'
+    if (mod.battery)    passport.battery = mod.battery;         // 'hood' | 'trunk' | 'seat'
+    return passport;
+}
+
+// Фильтрует список работ по паспорту + применяет include/exclude модификации
+function collectWorks(mod) {
+    const p = buildPassport(mod);
+    const result = [];
+    Object.keys(worksCatalog).forEach(function(wid) {
+        const w = worksCatalog[wid];
+        const req = w.req || {};
+        let ok = true;
+        Object.keys(req).forEach(function(key) {
+            const need = req[key];
+            const have = p[key];
+            if (Array.isArray(need)) {
+                if (need.indexOf(have) === -1) ok = false;
+            } else {
+                if (have !== need) ok = false;
+            }
+        });
+        if (ok) result.push(wid);
+    });
+    // Добавляем include
+    if (mod.include) mod.include.forEach(function(wid) {
+        if (worksCatalog[wid] && result.indexOf(wid) === -1) result.push(wid);
+    });
+    // Убираем exclude
+    if (mod.exclude) {
+        mod.exclude.forEach(function(wid) {
+            const i = result.indexOf(wid);
+            if (i !== -1) result.splice(i, 1);
+        });
+    }
+    return result;
+}
+
+// Валидация базы
 function validateWorks(brandData, brandName) {
     const errors = [];
     if (!brandData || !brandData.modifications) return errors;
