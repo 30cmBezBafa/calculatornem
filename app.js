@@ -1,5 +1,5 @@
 // ============================================
-// НЕМЕЦИЯ — ОСНОВНАЯ ЛОГИКА (с облачной синхронизацией)
+// НЕМЕЦИЯ — ОСНОВНАЯ ЛОГИКА (облако + журнал расчётов)
 // ============================================
 (function() {
 'use strict';
@@ -13,6 +13,7 @@ let expandedIncludes = new Set();
 let isSaving = false;
 let searchActiveIndex = -1;
 let searchResults = [];
+let journalItems = [];
 
 const $ = function(id) { return document.getElementById(id); };
 const el = function(tag, cls, html) {
@@ -86,7 +87,7 @@ function flushLocalQueue() {
     });
 }
 
-// --- ADD OPTIONS / MODAL ---
+// --- ADD OPTIONS / MODALS ---
 function addAddOption(selectId, labelText) {
     const sel = $(selectId);
     if (!sel) return;
@@ -101,15 +102,78 @@ function addAddOption(selectId, labelText) {
 function openAddModal(type) {
     const typeSel = $('addType');
     if (typeSel) typeSel.value = type;
-    const overlay = document.querySelector('.modal-overlay');
+    const overlay = $('addOverlay');
     if (overlay) overlay.classList.add('active');
 }
 
 function closeAddModal() {
-    const overlay = document.querySelector('.modal-overlay');
+    const overlay = $('addOverlay');
     if (overlay) overlay.classList.remove('active');
 }
 
+// --- JOURNAL (журнал расчётов из облака) ---
+function openJournal() {
+    const overlay = $('journalOverlay');
+    if (!overlay) return;
+    overlay.classList.add('active');
+    const list = $('journalList');
+    if (!CONFIG.cloudUrl) {
+        if (list) list.innerHTML = '<div class="calc-empty">Облако не подключено</div>';
+        return;
+    }
+    if (list) list.innerHTML = '<div class="calc-empty">Загружаем журнал...</div>';
+    fetch(CONFIG.cloudUrl + '?action=getCalcs')
+        .then(function(r) { return r.json(); })
+        .then(function(j) {
+            journalItems = (j && j.ok && j.items) ? j.items : [];
+            renderJournalList($('journalSearch') ? $('journalSearch').value : '');
+        })
+        .catch(function() {
+            if (list) list.innerHTML = '<div class="calc-empty">Не удалось загрузить журнал</div>';
+        });
+}
+
+function closeJournal() {
+    const overlay = $('journalOverlay');
+    if (overlay) overlay.classList.remove('active');
+}
+
+function renderJournalList(filter) {
+    const list = $('journalList');
+    if (!list) return;
+    const q = (filter || '').trim().toLowerCase();
+    const items = journalItems.filter(function(it) {
+        if (!q) return true;
+        return (it.carLabel || '').toLowerCase().includes(q) || (it.manager || '').toLowerCase().includes(q);
+    });
+    if (items.length === 0) {
+        list.innerHTML = '<div class="calc-empty">Ничего не найдено</div>';
+        return;
+    }
+    list.innerHTML = items.map(function(it) {
+        return '<div class="history-card" data-row="' + it.row + '">' +
+            '<div class="h-row"><span class="h-car">' + (it.carLabel || '—') + '</span><span class="h-sum">' + formatRub(it.total || 0) + '</span></div>' +
+            '<div class="h-date">' + (it.date || '') + ' · ' + (it.manager || '—') + '</div>' +
+            '<div class="h-works">' + (it.worksCount || 0) + ' работ' + (it.data ? '' : ' · (старая запись, не восстанавливается)') + '</div>' +
+            '</div>';
+    }).join('');
+    list.querySelectorAll('.history-card').forEach(function(card) {
+        card.onclick = function() {
+            const row = parseInt(card.dataset.row);
+            const it = journalItems.find(function(x) { return x.row === row; });
+            if (!it) return;
+            if (!it.data || !it.data.modificationId) {
+                showToast('В этой записи нет данных для восстановления');
+                return;
+            }
+            closeJournal();
+            restoreCalc(it.data);
+            showToast('Расчёт загружен из журнала');
+        };
+    });
+}
+
+// --- WORK ITEM TEMPLATE ---
 function workItemHTML(workId, work, price, inCalc, customNh) {
     const rateLabel = work.rateType === 'engine' ? 'ДВС' : '';
     const badge = rateLabel ? '<span class="rate-badge ' + work.rateType + '">' + rateLabel + '</span>' : '';
@@ -195,6 +259,11 @@ function init() {
 
     if ($('saveCalcBtn')) $('saveCalcBtn').onclick = saveCalculation;
     if ($('clearAllBtn')) $('clearAllBtn').onclick = clearAll;
+    if ($('journalBtn')) $('journalBtn').onclick = openJournal;
+    if ($('journalClose')) $('journalClose').onclick = closeJournal;
+    if ($('journalSearch')) $('journalSearch').addEventListener('input', debounce(function() {
+        renderJournalList($('journalSearch').value);
+    }, 200));
 
     if ($('themeToggle')) {
         $('themeToggle').onchange = function() {
@@ -225,7 +294,6 @@ function init() {
         if (errors.length > 0) console.warn('Validation errors:', errors);
     }
 
-    // Досылаем заявки, которые не ушли раньше (были без сети)
     window.addEventListener('online', function() { flushLocalQueue(); });
     flushLocalQueue();
 }
@@ -432,7 +500,7 @@ function selectFromSearch(mod) {
 }
 
 document.addEventListener('click', function(e) {
-    if (!e.target.closest('.car-search-wrapper')) {
+    if (!e.target.closest('.car-search-wrapper') && !e.target.closest('.modal')) {
         const dropdown = $('searchDropdown');
         if (dropdown) dropdown.classList.remove('active');
     }
@@ -782,7 +850,6 @@ function saveCalculation() {
     renderHistory();
     showToast('Расчёт сохранён');
 
-    // Отправляем расчёт в журнал Google Таблицы
     if (CONFIG.cloudUrl) {
         cloudSend({
             action: 'addCalc',
@@ -797,7 +864,8 @@ function saveCalculation() {
                     return sw.name + ': ' + sw.coefficients.map(function(c) {
                         return CONFIG.coefficients[c.type].label + ' +' + c.percent + '%';
                     }).join(', ');
-                }).join('; ')
+                }).join('; '),
+            data: record
         });
     }
 }
@@ -942,7 +1010,7 @@ function submitVin() {
 
     if (CONFIG.cloudUrl) {
         showToast('Отправляем запрос...');
-        flushLocalQueue().then(function(sent) {
+        flushLocalQueue().then(function() {
             const left = readLocalQueue();
             if (left.length === 0) showToast('Запрос отправлен в общую очередь');
             else showToast('Нет связи: запрос сохранён и уйдёт позже');
